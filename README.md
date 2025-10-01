@@ -38,3 +38,27 @@ Consulta la carpeta `docs/` para información técnica, funcional y diagramas de
 
 ## Colaboración
 Para contribuir, sigue las buenas prácticas de desarrollo, revisa la documentación y utiliza las ramas de desarrollo para tus cambios.
+
+# Group Management Manager
+
+Este monorepo contiene la gestión de grupos y reservas para deportes como pádel y otros.
+
+## Estructura del proyecto
+
+- `backend/` — API y lógica de negocio (NestJS)
+- `web/` — Aplicación web (por definir)
+- `mobile/` — Aplicación móvil (por definir)
+- `docs/` — Documentación técnica y funcional
+- `shared/` — Código compartido entre módulos
+- `scripts/` — Scripts de automatización y utilidades
+- `.github/` — Workflows y configuración de GitHub Actions
+
+## Cómo empezar
+
+1. Instala dependencias en cada módulo según corresponda.
+2. Consulta la documentación en `docs/` para detalles técnicos y funcionales.
+3. Usa el backend con NestJS para la API principal.
+
+## Contacto
+
+Para dudas o sugerencias, contacta al responsable del repositorio.
