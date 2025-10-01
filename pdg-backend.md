@@ -23,10 +23,7 @@ flowchart TD
 
 Las tecnologías y herramientas recomendadas para el desarrollo del backend son:
 
-- **Lenguaje:** Node.js (Express/NestJS) o Python (Django/FastAPI)
-- **Base de datos:** PostgreSQL, MySQL o MongoDB
-- **ORM:** Sequelize, TypeORM, Prisma (Node.js) / Django ORM, SQLAlchemy (Python)
-- **Autenticación:** JWT, OAuth2, integración con Google/Facebook
+**Autenticación:** JWT, OAuth2, integración con Google, Facebook, Apple, Microsoft
 - **Notificaciones:** SendGrid (email), Firebase Cloud Messaging (push), Twilio (WhatsApp)
 - **Contenerización y despliegue:** Docker, CI/CD (GitHub Actions, GitLab CI)
 - **Monitorización:** Prometheus, Grafana
@@ -34,7 +31,6 @@ Las tecnologías y herramientas recomendadas para el desarrollo del backend son:
 
 ## 4. Modelos de Datos
 El backend implementará los siguientes modelos, alineados con la definición funcional y técnica:
-
 ### Usuario
 - id (PK)
 - nombre
@@ -159,3 +155,35 @@ POST /api/notificaciones
 
 ## 11. Diagramas Técnicos
 Ver documento técnico general para diagramas de arquitectura y entidad-relación.
+
+## 12. Flujos de Usuario
+
+### 12.1. Registro y Autenticación de Usuario
+1. El usuario puede registrarse y autenticarse de dos formas:
+	- Mediante email/contraseña accediendo al endpoint `/api/auth/register` y enviando sus datos.
+	- Mediante redes sociales (Google, Facebook, Apple, Microsoft) accediendo al endpoint `/api/auth/{proveedor}` y autorizando el acceso.
+2. El backend valida los datos, crea el usuario y almacena la contraseña cifrada o vincula la cuenta social.
+3. El usuario inicia sesión usando email/contraseña (`/api/auth/login`) o mediante el proveedor social, recibiendo un token JWT/OAuth2.
+4. El token se usa para autenticar y autorizar todas las operaciones posteriores.
+
+### 12.2. Creación y Gestión de Grupos
+1. Un usuario autenticado accede al endpoint de creación de grupo (`/api/grupos`).
+2. El backend crea el grupo y asigna al usuario como administrador.
+3. El administrador puede invitar y gestionar miembros y otros administradores.
+4. Los usuarios pueden pertenecer a varios grupos.
+
+### 12.3. Creación de Reservas y Reservas Unificadas
+1. Un administrador accede al endpoint de creación de reserva unificada (`/api/reservas-unificadas`).
+2. Se crean una o varias reservas individuales asociadas a la reserva unificada (`/api/reservas`).
+3. El backend suma las plazas y gestiona la relación entre reservas y reserva unificada.
+4. Se pueden modificar y consultar reservas y reservas unificadas.
+
+### 12.4. Inscripción a Partidos/Eventos y Gestión de Suplentes
+1. Los usuarios ven las plazas disponibles en la reserva unificada y acceden al endpoint de inscripción (`/api/partidos/{id}/inscripcion`).
+2. Si las plazas principales están llenas, pueden inscribirse como suplentes (`/api/partidos/{id}/suplentes`).
+3. El backend gestiona la lista de participantes y suplentes, y realiza reemplazos automáticos si hay bajas.
+
+### 12.5. Envío de Notificaciones
+1. El backend detecta eventos relevantes (nueva reserva, cambios, plazas libres, reemplazos).
+2. Se envían notificaciones automáticas por email, push o WhatsApp según la configuración del usuario.
+3. El sistema registra el estado y entrega de las notificaciones.

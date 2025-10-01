@@ -6,7 +6,7 @@ Desarrollar una plataforma para gestionar grupos deportivos, reservas de pistas/
 ### 2. Alcance Funcional
 
 #### 2.1. Gestión de Usuarios
-- Registro y autenticación de usuarios.
+- Registro y autenticación de usuarios mediante email/contraseña y autenticación social (Google, Facebook, Apple, Microsoft).
 - Perfil de usuario (nombre, contacto, deportes preferidos).
 - Un usuario puede pertenecer a varios grupos.
 
