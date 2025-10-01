@@ -23,7 +23,10 @@ flowchart TD
 
 Las tecnologías y herramientas recomendadas para el desarrollo del backend son:
 
-**Autenticación:** JWT, OAuth2, integración con Google, Facebook, Apple, Microsoft
+- **Lenguaje y Framework:** Node.js (NestJS)
+- **Base de datos:** PostgreSQL, MySQL o MongoDB
+- **ORM:** TypeORM, Prisma
+- **Autenticación:** JWT, OAuth2, integración con Google, Facebook, Apple, Microsoft
 - **Notificaciones:** SendGrid (email), Firebase Cloud Messaging (push), Twilio (WhatsApp)
 - **Contenerización y despliegue:** Docker, CI/CD (GitHub Actions, GitLab CI)
 - **Monitorización:** Prometheus, Grafana

@@ -61,7 +61,7 @@ root/
 
 ## 4. Requerimientos Técnicos
 - Plataforma web (SPA: React, Vue.js, Angular).
-- Backend: Node.js (Express/NestJS) o Python (Django/FastAPI).
+- Backend: Node.js (NestJS).
 - Base de datos relacional (PostgreSQL/MySQL) o NoSQL (MongoDB).
 - Sistema de notificaciones (SendGrid, Firebase, Twilio).
 - Seguridad y privacidad de datos.
