@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -24,7 +24,7 @@ export class AuthService {
     const exists = await this.userRepository.findOne({
       where: { email: data.email },
     });
-    if (exists) throw new Error('Email ya registrado');
+    if (exists) throw new ConflictException('Email ya registrado');
     const hashed: string = await bcrypt.hash(data.password, 10);
     const user = this.userRepository.create({
       email: data.email,
