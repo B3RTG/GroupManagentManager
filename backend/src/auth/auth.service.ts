@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -42,7 +46,8 @@ export class AuthService {
     });
     if (!user) throw new Error('Usuario no encontrado');
     const valid = await bcrypt.compare(data.password, user.password);
-    if (!valid) throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
+    if (!valid)
+      throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
     const token = this.jwtService.sign({ sub: user.id, email: user.email });
     return { user, token };
   }
