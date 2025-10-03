@@ -1,0 +1,7 @@
+{
+  "language": "TypeScript",
+  "framework": "NestJS",
+  "codeStyle": "clean",
+  "security": "high",
+  "documentation": "required"
+}

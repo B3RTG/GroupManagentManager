@@ -7,14 +7,11 @@ export interface SocialUser {
 }
 
 import { Controller, Get, Req, UseGuards, Body, Post } from '@nestjs/common';
+import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 
-export class RegisterDto {
-  email: string;
-  password: string;
-  username?: string;
-}
+// ...existing code...
 
 export class LoginDto {
   email: string;
@@ -40,7 +37,14 @@ export class AuthController {
     const { user, token } = await this.authService.validateOrCreateSocialUser(
       req.user as SocialUser,
     );
-    return { user, token };
+    // Construir SocialUser combinando datos del usuario y el provider
+    const socialUser: SocialUser = {
+      email: user.email,
+      name: user.name ?? '',
+      provider: 'google',
+      googleId: req.user.googleId,
+    };
+    return { user: socialUser, token };
   }
 
   @Get('facebook')
@@ -58,7 +62,14 @@ export class AuthController {
     const { user, token } = await this.authService.validateOrCreateSocialUser(
       req.user as SocialUser,
     );
-    return { user, token };
+    // Construir SocialUser combinando datos del usuario y el provider
+    const socialUser: SocialUser = {
+      email: user.email,
+      name: user.name ?? '',
+      provider: 'facebook',
+      facebookId: req.user.facebookId,
+    };
+    return { user: socialUser, token };
   }
 
   @Post('register')

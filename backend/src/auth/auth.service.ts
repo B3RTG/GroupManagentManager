@@ -1,12 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
-interface RegisterDto {
-  email: string;
-  password: string;
-  username?: string;
-}
+import { RegisterDto } from './dto/register.dto';
+import { User } from '../users/entities/user.entity';
 
 interface LoginDto {
   email: string;
@@ -15,77 +14,68 @@ interface LoginDto {
 
 @Injectable()
 export class AuthService {
-  private users: Array<{
-    id: string;
-    email: string;
-    username?: string;
-    password: string;
-    name?: string;
-    preferredSports?: string[];
-  }> = [];
+  constructor(
+    private readonly jwtService: JwtService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
-  constructor(private readonly jwtService: JwtService) {}
-
-  async register(data: RegisterDto): Promise<{ user: any; token: string }> {
-    const exists = this.users.find((u) => u.email === data.email);
+  async register(data: RegisterDto): Promise<{ user: User; token: string }> {
+    const exists = await this.userRepository.findOne({
+      where: { email: data.email },
+    });
     if (exists) throw new Error('Email ya registrado');
-    // Hashear contraseña
     const hashed: string = await bcrypt.hash(data.password, 10);
-    const user = {
-      id: (Math.random() * 100000).toFixed(0),
+    const user = this.userRepository.create({
       email: data.email,
       username: data.username,
       password: hashed,
-    };
-    this.users.push(user);
-    // Generar JWT
+    });
+    await this.userRepository.save(user);
     const token = this.jwtService.sign({ sub: user.id, email: user.email });
-    return {
-      user: { id: user.id, email: user.email, username: user.username },
-      token,
-    };
+    return { user, token };
   }
 
-  async login(data: LoginDto): Promise<{ user: any; token: string }> {
-    const user = this.users.find((u) => u.email === data.email);
+  async login(data: LoginDto): Promise<{ user: User; token: string }> {
+    const user = await this.userRepository.findOne({
+      where: { email: data.email },
+    });
     if (!user) throw new Error('Usuario no encontrado');
-    const valid: boolean = await bcrypt.compare(data.password, user.password);
-    if (!valid) throw new Error('Contraseña incorrecta');
+    const valid = await bcrypt.compare(data.password, user.password);
+    if (!valid) throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
     const token = this.jwtService.sign({ sub: user.id, email: user.email });
-    return {
-      user: { id: user.id, email: user.email, username: user.username },
-      token,
-    };
+    return { user, token };
   }
 
-  async validateOrCreateSocialUser(profile: {
+  async validateOrCreateSocialUser(socialUser: {
     email: string;
     name: string;
     provider: 'google' | 'facebook';
     googleId?: string;
     facebookId?: string;
-  }): Promise<{
-    user: {
-      email: string;
-      name: string;
-      provider: 'google' | 'facebook';
-      googleId?: string;
-      facebookId?: string;
-    };
-    token: string;
-  }> {
-    const user = {
-      email: profile.email,
-      name: profile.name,
-      provider: profile.provider,
-      googleId: profile.googleId,
-      facebookId: profile.facebookId,
-    };
-    const socialId = profile.googleId || profile.facebookId;
-    const token = this.jwtService.sign({
-      sub: socialId,
-      email: user.email,
+  }): Promise<{ user: User; token: string }> {
+    let user = await this.userRepository.findOne({
+      where: { email: socialUser.email },
     });
+    if (!user) {
+      user = this.userRepository.create({
+        email: socialUser.email,
+        name: socialUser.name,
+        username: socialUser.email,
+        password: '', // Usuario social, sin contraseña
+        googleId: socialUser.googleId,
+        facebookId: socialUser.facebookId,
+        provider: socialUser.provider,
+      });
+      await this.userRepository.save(user);
+    } else {
+      // Actualiza campos sociales si el usuario ya existe
+      user.googleId = socialUser.googleId ?? user.googleId;
+      user.facebookId = socialUser.facebookId ?? user.facebookId;
+      user.provider = socialUser.provider ?? user.provider;
+      await this.userRepository.save(user);
+    }
+    const token = this.jwtService.sign({ sub: user.id, email: user.email });
     return { user, token };
   }
 }
