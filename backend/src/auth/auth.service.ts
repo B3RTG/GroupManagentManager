@@ -33,6 +33,7 @@ export class AuthService {
     const user = this.userRepository.create({
       email: data.email,
       username: data.username,
+      name: data.name,
       password: hashed,
     });
     await this.userRepository.save(user);

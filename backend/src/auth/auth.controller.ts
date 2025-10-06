@@ -10,6 +10,7 @@ import { Controller, Get, Req, UseGuards, Body, Post } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
+import { Console } from 'console';
 
 // ...existing code...
 
@@ -82,5 +83,13 @@ export class AuthController {
   async login(@Body() body: LoginDto) {
     // Lógica de login, delegada al servicio
     return this.authService.login(body);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('profile')
+  getProfile(
+    @Req() req: Express.Request & { user?: SocialUser },
+  ): SocialUser | undefined {
+    return req.user;
   }
 }
