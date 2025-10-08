@@ -8,21 +8,21 @@ import { RolesGuard } from '../common/guards/roles.guard';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-    @Get('me')
-    @UseGuards(AuthGuard('jwt'))
-	async getMe(@Req() req: any) {
-		// req.user viene del JWT
-		return req.user;
-	}
+  @Get('me')
+  @UseGuards(AuthGuard('jwt'))
+  getMe(@Req() req: any) {
+    // req.user viene del JWT
+    return req.user;
+  }
 
-	@Get()
-	@Roles('admin')
-	@UseGuards(RolesGuard)
-	async getUsers(
-		@Query('page') page: number = 1,
-		@Query('limit') limit: number = 10,
-		@Query('search') search?: string,
-	) {
-		return this.usersService.findAll({ page, limit, search });
-	}
+  @Get()
+  @Roles('admin')
+  @UseGuards(RolesGuard)
+  async getUsers(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('search') search?: string,
+  ) {
+    return this.usersService.findAll({ page, limit, search });
+  }
 }
