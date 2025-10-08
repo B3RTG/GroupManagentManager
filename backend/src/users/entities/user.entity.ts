@@ -1,5 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
+export type UserRole = 'user' | 'admin';
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -28,4 +30,11 @@ export class User {
 
   @Column('text', { array: true, nullable: true })
   preferredSports?: string[];
+
+  @Column({
+    type: 'enum',
+    enum: ['user', 'admin'],
+    default: 'user',
+  })
+  role: UserRole;
 }
