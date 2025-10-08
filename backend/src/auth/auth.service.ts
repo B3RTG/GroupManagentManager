@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 
 import { RegisterDto } from './dto/register.dto';
 import { User } from '../users/entities/user.entity';
+import { Console } from 'console';
 
 interface LoginDto {
   email: string;
@@ -22,7 +23,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async register(data: RegisterDto): Promise<{ user: User; token: string }> {
     const exists = await this.userRepository.findOne({
@@ -42,10 +43,15 @@ export class AuthService {
   }
 
   async login(data: LoginDto): Promise<{ user: User; token: string }> {
+
+    if (!data || !data.email || !data.password)
+      throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
+
     const user = await this.userRepository.findOne({
       where: { email: data.email },
     });
     if (!user) throw new Error('Usuario no encontrado');
+
     const valid = await bcrypt.compare(data.password, user.password);
     if (!valid)
       throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
