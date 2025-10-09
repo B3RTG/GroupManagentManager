@@ -6,6 +6,7 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { GroupMembership, GroupRole } from './entities/group-membership.entity';
 import { User } from '../users/entities/user.entity';
+import { AddMemberDto } from './dto/add-member.dto';
 
 type GroupWithOwner = Group & { owner: { id: string; name?: string } | null };
 
@@ -16,7 +17,7 @@ export class GroupsService {
     private readonly groupRepository: Repository<Group>,
     @InjectRepository(GroupMembership)
     private readonly membershipRepository: Repository<GroupMembership>,
-  ) {}
+  ) { }
 
   async createGroup(
     createGroupDto: CreateGroupDto,
@@ -51,9 +52,9 @@ export class GroupsService {
         ...group,
         owner: ownerMembership
           ? {
-              id: ownerMembership.user.id,
-              name: ownerMembership.user.name,
-            }
+            id: ownerMembership.user.id,
+            name: ownerMembership.user.name,
+          }
           : null,
       });
     }
@@ -80,4 +81,41 @@ export class GroupsService {
     await this.groupRepository.remove(group);
     return { id };
   }
+
+  /** Metodos de gestión de usuarios en grupos */
+  async addMember(
+    groupId: string,
+    member: AddMemberDto,
+  ) {
+    const membership = this.membershipRepository.create({
+      user: { id: member.userId },
+      group: { id: groupId },
+      role: member.role || GroupRole.MEMBER,
+    });
+    return await this.membershipRepository.save(membership);
+  }
+
+  async removeMember(groupId: string, userId: string) {
+    const membership = await this.membershipRepository.findOne({
+      where: { group: { id: groupId }, user: { id: userId } },
+    });
+    if (!membership) {
+      throw new Error('Membership not found');
+    }
+    await this.membershipRepository.remove(membership);
+    return { userId, groupId };
+  }
+
+  async listMembers(groupId: string) {
+    const memberships = await this.membershipRepository.find({
+      where: { group: { id: groupId } },
+      relations: ['user'],
+    });
+    return memberships.map((m) => ({
+      userId: m.user.id,
+      userName: m.user.name,
+      role: m.role,
+    }));
+  }
+
 }

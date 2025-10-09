@@ -19,10 +19,11 @@ import { GroupRoleGuard } from './guards/group-role.guard';
 import { GroupRole } from './entities/group-membership.entity';
 import type { Request } from 'express';
 import type { User } from '../users/entities/user.entity';
+import { AddMemberDto } from './dto/add-member.dto';
 
 @Controller('groups')
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(private readonly groupsService: GroupsService) { }
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
@@ -68,4 +69,34 @@ export class GroupsController {
   async deleteGroup(@Param('id') id: string) {
     return await this.groupsService.deleteGroup(id);
   }
+
+
+  /** Gestión de miembros */
+  @Post(':id/members')
+  @UseGuards(AuthGuard('jwt'), GroupRoleGuard)
+  @GroupRoles(GroupRole.OWNER, GroupRole.ADMIN)
+  async addMember(
+    @Param('id') groupId: string,
+    @Body() member: AddMemberDto
+  ) {
+    return await this.groupsService.addMember(groupId, member);
+  }
+
+  @Delete(':id/members/:userId')
+  @UseGuards(AuthGuard('jwt'), GroupRoleGuard)
+  @GroupRoles(GroupRole.OWNER, GroupRole.ADMIN, GroupRole.MEMBER)
+  async removeMember(
+    @Param('id') groupId: string,
+    @Param('userId') userId: string
+  ) {
+    return await this.groupsService.removeMember(groupId, userId);
+  }
+
+  @Get(':id/members')
+  @UseGuards(AuthGuard('jwt'), GroupRoleGuard)
+  @GroupRoles(GroupRole.OWNER, GroupRole.ADMIN, GroupRole.MEMBER)
+  async listMembers(@Param('id') groupId: string) {
+    return await this.groupsService.listMembers(groupId);
+  }
+
 }
