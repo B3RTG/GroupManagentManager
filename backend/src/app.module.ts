@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './users/entities/user.entity';
+import { Group } from './groups/entities/group.entity';
+import { GroupMembership } from './groups/entities/group-membership.entity';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -21,7 +23,7 @@ import { NotificationsModule } from './notifications/notifications.module';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.get<string>('DATABASE_URL'),
-        entities: [User],
+        entities: [User, Group, GroupMembership],
         synchronize: false,
       }),
     }),
