@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { GroupMembership } from '../../groups/entities/group-membership.entity';
 
 export type UserRole = 'user' | 'admin';
 
@@ -37,4 +38,7 @@ export class User {
     default: 'user',
   })
   role: UserRole;
+
+  @OneToMany(() => GroupMembership, (membership) => membership.user)
+  memberships: GroupMembership[];
 }

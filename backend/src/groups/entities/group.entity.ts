@@ -1,12 +1,5 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToMany,
-  JoinTable,
-  ManyToOne,
-} from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { GroupMembership } from './group-membership.entity';
 
 @Entity()
 export class Group {
@@ -16,16 +9,8 @@ export class Group {
   @Column()
   name: string;
 
-  @ManyToMany(() => User)
-  @JoinTable()
-  administrators: User[];
-
-  @ManyToOne(() => User, { nullable: true })
-  mainAdministrator: User;
-
-  @ManyToMany(() => User)
-  @JoinTable()
-  members: User[];
+  @OneToMany(() => GroupMembership, (membership) => membership.group)
+  memberships: GroupMembership[];
 
   @Column({ default: false })
   allCanManageEvents: boolean;

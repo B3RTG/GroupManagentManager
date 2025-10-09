@@ -4,13 +4,13 @@
 - [x] Implementar registro y login tradicional y social (Google, Facebook)
 - [x] Validar datos y manejar errores
 
-## 2. Protección de rutas con JWT
-- [ ] Configurar guards para proteger endpoints
-- [ ] Permitir solo acceso autenticado
+## 2. Protección de rutas con JWT ✅
+- [x] Configurar guards para proteger endpoints
+- [x] Permitir solo acceso autenticado
 
-## 3. Gestión de usuarios
-- [ ] Endpoints para obtener, actualizar y eliminar usuarios
-- [ ] Implementar roles y permisos si es necesario
+## 3. Gestión de usuarios ✅
+- [x] Endpoints para obtener, actualizar y eliminar usuarios
+- [x] Implementar roles y permisos
 
 ## 4. Gestión de grupos
 - [ ] CRUD para grupos
