@@ -23,7 +23,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) { }
+  ) {}
 
   async register(data: RegisterDto): Promise<{ user: User; token: string }> {
     const exists = await this.userRepository.findOne({
@@ -38,12 +38,15 @@ export class AuthService {
       password: hashed,
     });
     await this.userRepository.save(user);
-    const token = this.jwtService.sign({ sub: user.id, email: user.email });
+    const token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
     return { user, token };
   }
 
   async login(data: LoginDto): Promise<{ user: User; token: string }> {
-
     if (!data || !data.email || !data.password)
       throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
 
@@ -55,7 +58,11 @@ export class AuthService {
     const valid = await bcrypt.compare(data.password, user.password);
     if (!valid)
       throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
-    const token = this.jwtService.sign({ sub: user.id, email: user.email });
+    const token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
     return { user, token };
   }
 
@@ -87,7 +94,11 @@ export class AuthService {
       user.provider = socialUser.provider ?? user.provider;
       await this.userRepository.save(user);
     }
-    const token = this.jwtService.sign({ sub: user.id, email: user.email });
+    const token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
     return { user, token };
   }
 }

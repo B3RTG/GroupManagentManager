@@ -21,18 +21,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string }) {
-    console.log('JWT payload:', payload);
+  async validate(payload: {
+    sub: string;
+    email: string;
+    role: string;
+  }): Promise<(User & { role: string }) | null> {
     const user = await this.userRepository.findOne({
       where: {
         id: payload.sub,
       },
     });
     if (!user) {
-      console.log('User not found for id:', payload.sub);
       return null;
     }
-    console.log('User found:', user);
-    return user;
+    // Retornar el usuario con el campo role del payload
+    return { ...user, role: payload.role as 'user' | 'admin' };
   }
 }
