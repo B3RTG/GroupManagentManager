@@ -19,7 +19,7 @@ export class GroupRoleGuard implements CanActivate {
     private reflector: Reflector,
     @InjectRepository(GroupMembership)
     private readonly membershipRepository: Repository<GroupMembership>,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.get<GroupRole[]>(
@@ -32,6 +32,12 @@ export class GroupRoleGuard implements CanActivate {
     const userId = request.user?.id;
     const groupId = request.params.id;
 
+    if (request.user?.role === 'admin') {
+      // Si el usuario es admin global, permitir el acceso
+      request.user.groupRole = GroupRole.ADMIN;
+      return true;
+    }
+
     if (!userId || !groupId) {
       throw new ForbiddenException('User or group not found');
     }
@@ -43,6 +49,9 @@ export class GroupRoleGuard implements CanActivate {
     if (!membership || !requiredRoles.includes(membership.role)) {
       throw new ForbiddenException('Insufficient permissions');
     }
+
+    // Añadir el rol al usuario en la request
+    request.user.groupRole = membership.role;
 
     return true;
   }

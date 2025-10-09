@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Req,
+  ForbiddenException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { GroupsService } from './groups.service';
@@ -87,8 +88,15 @@ export class GroupsController {
   @GroupRoles(GroupRole.OWNER, GroupRole.ADMIN, GroupRole.MEMBER)
   async removeMember(
     @Param('id') groupId: string,
-    @Param('userId') userId: string
+    @Param('userId') userId: string,
+    @Req() req: Request
   ) {
+    const user = req.user as User & { groupRole: GroupRole };
+    console.log('Current user role in group:', user);
+
+    if (user.groupRole === GroupRole.MEMBER && user.id !== userId) {
+      throw new ForbiddenException('No puedes eliminar a otros miembros si no eres administrador o propietario del grupo.');
+    }
     return await this.groupsService.removeMember(groupId, userId);
   }
 
@@ -97,6 +105,24 @@ export class GroupsController {
   @GroupRoles(GroupRole.OWNER, GroupRole.ADMIN, GroupRole.MEMBER)
   async listMembers(@Param('id') groupId: string) {
     return await this.groupsService.listMembers(groupId);
+  }
+
+  @Get(':id/owner')
+  @UseGuards(AuthGuard('jwt'))
+  @GroupRoles(GroupRole.OWNER, GroupRole.ADMIN, GroupRole.MEMBER)
+  async getGroupOwner(@Param('id') groupId: string) {
+    return await this.groupsService.getGroupOwner(groupId);
+  }
+
+  // metodo para cambiar el owner del grupo
+  @Put(':id/owner/:userId')
+  @UseGuards(AuthGuard('jwt'), GroupRoleGuard)
+  @GroupRoles(GroupRole.OWNER)
+  async changeGroupOwner(
+    @Param('id') groupId: string,
+    @Param('userId') userId: string,
+  ) {
+    return await this.groupsService.changeGroupOwner(groupId, userId);
   }
 
 }

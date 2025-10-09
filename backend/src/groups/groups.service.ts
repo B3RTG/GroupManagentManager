@@ -118,4 +118,58 @@ export class GroupsService {
     }));
   }
 
+  async getUserRoleInGroup(userId: string, groupId: string): Promise<GroupRole | null> {
+    const membership = await this.membershipRepository.findOne({
+      where: { user: { id: userId }, group: { id: groupId } },
+    });
+    return membership ? membership.role : null;
+  }
+
+  async getGroupOwner(groupId: string) {
+    const ownerMembership = await this.membershipRepository.findOne({
+      where: { group: { id: groupId }, role: GroupRole.OWNER },
+      relations: ['user'],
+    });
+    if (!ownerMembership) {
+      throw new Error('Owner not found');
+    }
+    return {
+      userId: ownerMembership.user.id,
+      userName: ownerMembership.user.name,
+    };
+  }
+
+  async changeGroupOwner(groupId: string, newOwnerId: string) {
+    const currentOwnerMembership = await this.membershipRepository.findOne({
+      where: { group: { id: groupId }, role: GroupRole.OWNER },
+    });
+    if (!currentOwnerMembership) {
+      throw new Error('Current owner not found');
+    }
+
+    const newOwnerMembership = await this.membershipRepository.findOne({
+      where: { group: { id: groupId }, user: { id: newOwnerId } },
+    });
+    if (!newOwnerMembership) {
+      throw new Error('New owner must be a member of the group');
+    }
+
+    // Cambiar roles
+    currentOwnerMembership.role = GroupRole.ADMIN;
+    newOwnerMembership.role = GroupRole.OWNER;
+    await this.membershipRepository.save([currentOwnerMembership, newOwnerMembership]);
+
+    return {
+      userId: newOwnerMembership.user.id,
+      userName: newOwnerMembership.user.name,
+    };
+  }
+
+  async isUserInGroup(userId: string, groupId: string): Promise<boolean> {
+    const membership = await this.membershipRepository.findOne({
+      where: { user: { id: userId }, group: { id: groupId } },
+    });
+    return !!membership;
+  }
+
 }
