@@ -12,10 +12,10 @@
 - [x] Endpoints para obtener, actualizar y eliminar usuarios
 - [x] Implementar roles y permisos
 
-## 4. Gestión de grupos
-- [ ] CRUD para grupos
-- [ ] Relación con usuarios
-- [ ] Lógica de pertenencia y administración
+## 4. Gestión de grupos ✅
+- [x] CRUD para grupos
+- [x] Relación con usuarios
+- [x] Lógica de pertenencia y administración
 
 ## 5. Gestión de reservas
 - [ ] CRUD para reservas
