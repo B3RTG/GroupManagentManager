@@ -13,6 +13,7 @@ import { UnifiedReservationsModule } from './unified-reservations/unified-reserv
 import { ReservationsModule } from './reservations/reservations.module';
 import { MatchesModule } from './matches/matches.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { GroupInvitation } from './groups/entities/group-invitation.entity';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { NotificationsModule } from './notifications/notifications.module';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.get<string>('DATABASE_URL'),
-        entities: [User, Group, GroupMembership],
+        entities: [User, Group, GroupMembership, GroupInvitation],
         synchronize: false,
       }),
     }),
@@ -38,4 +39,4 @@ import { NotificationsModule } from './notifications/notifications.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

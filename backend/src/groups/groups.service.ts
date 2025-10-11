@@ -5,6 +5,7 @@ import { Group } from './entities/group.entity';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { GroupMembership, GroupRole } from './entities/group-membership.entity';
+import { GroupInvitation, InvitationStatus } from './entities/group-invitation.entity';
 import { User } from '../users/entities/user.entity';
 import { AddMemberDto } from './dto/add-member.dto';
 
@@ -17,6 +18,8 @@ export class GroupsService {
     private readonly groupRepository: Repository<Group>,
     @InjectRepository(GroupMembership)
     private readonly membershipRepository: Repository<GroupMembership>,
+    @InjectRepository(GroupInvitation)
+    private readonly groupInvitationRepository: Repository<GroupInvitation>,
   ) { }
 
   async createGroup(
@@ -170,6 +173,112 @@ export class GroupsService {
       where: { user: { id: userId }, group: { id: groupId } },
     });
     return !!membership;
+  }
+
+  async updateMemberRole(groupId: string, userId: string, newRole: GroupRole) {
+    const membership = await this.membershipRepository.findOne({
+      where: { group: { id: groupId }, user: { id: userId } },
+    });
+    if (!membership) {
+      throw new Error('Membership not found');
+    }
+    membership.role = newRole;
+    await this.membershipRepository.save(membership);
+    return {
+      userId: membership.user.id,
+      groupId: membership.group.id,
+      role: membership.role,
+    };
+  }
+
+  /** Métodos de gestión de invitaciones */
+  async createInvitation(
+    groupId: string,
+    invitedUserId: string | null,
+    expiresAt: Date | null,
+  ) {
+    const invitation = this.groupInvitationRepository.create({
+      group: { id: groupId },
+      invitedUser: invitedUserId ? { id: invitedUserId } : null,
+      status: 'pending' as InvitationStatus,
+      expiresAt,
+    });
+    return await this.groupInvitationRepository.save(invitation);
+  }
+
+  /** 
+   * Aceptar invitacion. 
+   * El usuario de la invitacion puede ser nulo (invitacion abierta). 
+   * Si es nulo, el usuario que acepta la invitacion es el que se añade al grupo. Para ello, se debe pasar el userId del usuario que acepta la invitacion.
+   * */
+  async acceptInvitation(invitationId: string, userId: string) {
+    const invitation = await this.groupInvitationRepository.findOne({
+      where: { id: invitationId },
+      relations: ['group', 'invitedUser'],
+    });
+    if (!invitation) {
+      throw new Error('Invitation not found');
+    }
+    if (invitation.status !== 'pending') {
+      throw new Error('Invitation is not pending');
+    }
+    if (invitation.expiresAt && invitation.expiresAt < new Date()) {
+      invitation.status = 'expired';
+      await this.groupInvitationRepository.save(invitation);
+      throw new Error('Invitation has expired');
+    }
+    // Si la invitacion tiene un usuario invitado, debe coincidir con el userId que acepta la invitacion
+    if (invitation.invitedUser && invitation.invitedUser.id !== userId) {
+      throw new Error('This invitation is not for you');
+    }
+
+    // Añadir al usuario al grupo
+    const membership = this.membershipRepository.create({
+      user: { id: userId },
+      group: { id: invitation.group.id },
+      role: GroupRole.MEMBER,
+    });
+    await this.membershipRepository.save(membership);
+
+    // Actualizar estado de la invitacion
+    invitation.status = 'accepted';
+    await this.groupInvitationRepository.save(invitation);
+
+    return invitation;
+  }
+
+  async declineInvitation(invitationId: string, userId: string) {
+    const invitation = await this.groupInvitationRepository.findOne({
+      where: { id: invitationId },
+      relations: ['invitedUser'],
+    });
+    if (!invitation) {
+      throw new Error('Invitation not found');
+    }
+    if (invitation.status !== 'pending') {
+      throw new Error('Invitation is not pending');
+    }
+    // Si la invitacion tiene un usuario invitado, debe coincidir con el userId que acepta la invitacion
+    if (invitation.invitedUser && invitation.invitedUser.id !== userId) {
+      throw new Error('This invitation is not for you');
+    }
+
+    // Actualizar estado de la invitacion
+    invitation.status = 'declined';
+    await this.groupInvitationRepository.save(invitation);
+
+    return invitation;
+  }
+
+  async listInvitations(groupId: string, status?: InvitationStatus) {
+    const whereClause: any = { group: { id: groupId } };
+    if (status) {
+      whereClause.status = status;
+    }
+    return await this.groupInvitationRepository.find({
+      where: whereClause,
+      relations: ['invitedUser'],
+    });
   }
 
 }

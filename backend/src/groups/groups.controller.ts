@@ -125,4 +125,58 @@ export class GroupsController {
     return await this.groupsService.changeGroupOwner(groupId, userId);
   }
 
+  @Put(':id/members/:userId/role')
+  @UseGuards(AuthGuard('jwt'), GroupRoleGuard)
+  @GroupRoles(GroupRole.OWNER, GroupRole.ADMIN)
+  async updateMemberRole(
+    @Param('id') groupId: string,
+    @Param('userId') userId: string,
+    @Body() body: { role: GroupRole }
+  ) {
+    return await this.groupsService.updateMemberRole(groupId, userId, body.role);
+  }
+
+  /** Gestión de invitaciones */
+  @Post(':id/invitations')
+  @UseGuards(AuthGuard('jwt'), GroupRoleGuard)
+  @GroupRoles(GroupRole.OWNER, GroupRole.ADMIN)
+  async createInvitation(
+    @Param('id') groupId: string,
+    @Body() body: { invitedUserId?: string; expiresAt?: string }
+  ) {
+    return await this.groupsService.createInvitation(
+      groupId,
+      body.invitedUserId !== undefined ? body.invitedUserId : null,
+      body.expiresAt ? new Date(body.expiresAt) : null
+    );
+  }
+  @Get(':id/invitations')
+  @UseGuards(AuthGuard('jwt'), GroupRoleGuard)
+  @GroupRoles(GroupRole.OWNER, GroupRole.ADMIN, GroupRole.MEMBER)
+  async listInvitations(@Param('id') groupId: string) {
+    return await this.groupsService.listInvitations(groupId);
+  }
+
+  @Post(':id/invitations/:invitationId/accept')
+  @UseGuards(AuthGuard('jwt'))
+  async acceptInvitation(
+    @Param('id') groupId: string,
+    @Param('invitationId') invitationId: string,
+    @Req() req: Request
+  ) {
+    const user = req.user as User & { role: string };
+    return await this.groupsService.acceptInvitation(invitationId, user.id);
+  }
+
+  @Post(':id/invitations/:invitationId/decline')
+  @UseGuards(AuthGuard('jwt'))
+  async declineInvitation(
+    @Param('id') groupId: string,
+    @Param('invitationId') invitationId: string,
+    @Req() req: Request
+  ) {
+    const user = req.user as User & { role: string };
+    return await this.groupsService.declineInvitation(invitationId, user.id);
+  }
+
 }
