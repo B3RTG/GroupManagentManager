@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Group } from "./group.entity";
-import { User } from "src/users/entities/user.entity";
+import { User } from "../../users/entities/user.entity";
 
 export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
 

@@ -144,6 +144,7 @@ export class GroupsController {
     @Param('id') groupId: string,
     @Body() body: { invitedUserId?: string; expiresAt?: string }
   ) {
+    console.log('Creating invitation with body:', body);
     return await this.groupsService.createInvitation(
       groupId,
       body.invitedUserId !== undefined ? body.invitedUserId : null,

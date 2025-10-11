@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Group } from './entities/group.entity';
@@ -103,7 +103,7 @@ export class GroupsService {
       where: { group: { id: groupId }, user: { id: userId } },
     });
     if (!membership) {
-      throw new Error('Membership not found');
+      throw new BadRequestException('Membership not found');
     }
     await this.membershipRepository.remove(membership);
     return { userId, groupId };
@@ -134,7 +134,7 @@ export class GroupsService {
       relations: ['user'],
     });
     if (!ownerMembership) {
-      throw new Error('Owner not found');
+      throw new BadRequestException('Owner not found');
     }
     return {
       userId: ownerMembership.user.id,
@@ -147,14 +147,14 @@ export class GroupsService {
       where: { group: { id: groupId }, role: GroupRole.OWNER },
     });
     if (!currentOwnerMembership) {
-      throw new Error('Current owner not found');
+      throw new BadRequestException('Current owner not found');
     }
 
     const newOwnerMembership = await this.membershipRepository.findOne({
       where: { group: { id: groupId }, user: { id: newOwnerId } },
     });
     if (!newOwnerMembership) {
-      throw new Error('New owner must be a member of the group');
+      throw new BadRequestException('New owner must be a member of the group');
     }
 
     // Cambiar roles
@@ -180,7 +180,7 @@ export class GroupsService {
       where: { group: { id: groupId }, user: { id: userId } },
     });
     if (!membership) {
-      throw new Error('Membership not found');
+      throw new BadRequestException('Membership not found');
     }
     membership.role = newRole;
     await this.membershipRepository.save(membership);
@@ -217,19 +217,19 @@ export class GroupsService {
       relations: ['group', 'invitedUser'],
     });
     if (!invitation) {
-      throw new Error('Invitation not found');
+      throw new BadRequestException('Invitation not found');
     }
     if (invitation.status !== 'pending') {
-      throw new Error('Invitation is not pending');
+      throw new BadRequestException('Invitation is not pending');
     }
     if (invitation.expiresAt && invitation.expiresAt < new Date()) {
       invitation.status = 'expired';
       await this.groupInvitationRepository.save(invitation);
-      throw new Error('Invitation has expired');
+      throw new BadRequestException('Invitation has expired');
     }
     // Si la invitacion tiene un usuario invitado, debe coincidir con el userId que acepta la invitacion
     if (invitation.invitedUser && invitation.invitedUser.id !== userId) {
-      throw new Error('This invitation is not for you');
+      throw new BadRequestException('This invitation is not for you');
     }
 
     // Añadir al usuario al grupo
@@ -253,14 +253,14 @@ export class GroupsService {
       relations: ['invitedUser'],
     });
     if (!invitation) {
-      throw new Error('Invitation not found');
+      throw new BadRequestException('Invitation not found');
     }
     if (invitation.status !== 'pending') {
-      throw new Error('Invitation is not pending');
+      throw new BadRequestException('Invitation is not pending');
     }
     // Si la invitacion tiene un usuario invitado, debe coincidir con el userId que acepta la invitacion
     if (invitation.invitedUser && invitation.invitedUser.id !== userId) {
-      throw new Error('This invitation is not for you');
+      throw new BadRequestException('This invitation is not for you');
     }
 
     // Actualizar estado de la invitacion
