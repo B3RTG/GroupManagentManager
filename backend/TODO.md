@@ -16,6 +16,7 @@
 - [x] CRUD para grupos
 - [x] Relación con usuarios
 - [x] Lógica de pertenencia y administración
+- [x] Añadida posibilidad de crear invitaciones a grupos.
 
 ## 5. Gestión de reservas
 - [ ] CRUD para reservas
