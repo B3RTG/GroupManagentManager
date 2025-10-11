@@ -190,3 +190,164 @@ Ver documento técnico general para diagramas de arquitectura y entidad-relació
 1. El backend detecta eventos relevantes (nueva reserva, cambios, plazas libres, reemplazos).
 2. Se envían notificaciones automáticas por email, push o WhatsApp según la configuración del usuario.
 3. El sistema registra el estado y entrega de las notificaciones.
+
+
+# ANEXO 
+
+## Gestión de Reservas, Partidos y Eventos: Modelo y Flujo
+
+Esta sección describe en detalle el modelo de datos y la lógica de negocio para la gestión de reservas, reservas agrupadas y partidos/eventos deportivos. El objetivo es facilitar la comprensión y el desarrollo posterior, asegurando flexibilidad y escalabilidad para distintos deportes y formatos.
+
+### 1. Entidades principales
+
+#### UnifiedReservation (Reserva agrupada)
+- Representa la reserva global para un grupo en una fecha concreta, sumando todas las plazas disponibles (por ejemplo, varias pistas en el mismo día).
+- Permite agrupar varias reservas individuales bajo un mismo evento, facilitando la gestión de plazas y la inscripción de participantes/suplentes sobre el total.
+
+#### Reservation (Reserva individual)
+- Cada reserva representa una pista/espacio concreto, con su hora y detalles específicos.
+- Permite flexibilidad para reservar varias pistas/espacios en el mismo día, y asociarlas a la reserva agrupada.
+
+#### Match (Partido/Event/Actividad)
+- Representa el partido o evento que se juega sobre una reserva agrupada, gestionando la inscripción de participantes y suplentes.
+- Permite asociar la lógica deportiva (inscripción, suplentes, reglas) a la reserva agrupada, sin mezclarla con la lógica de reservas de pistas.
+
+### 2. Relación entre entidades
+
+- Una `UnifiedReservation` puede tener varias `Reservation` asociadas.
+- Un `Match` se asocia a una `UnifiedReservation` y gestiona la inscripción de usuarios sobre el total de plazas.
+
+#### Diagrama simplificado
+
+```mermaid
+erDiagram
+		GROUP ||--o{ UNIFIEDRESERVATION : organiza
+		UNIFIEDRESERVATION ||--o{ RESERVATION : agrupa
+		UNIFIEDRESERVATION ||--o{ MATCH : tiene
+		MATCH ||--o{ USER : participa
+		MATCH ||--o{ USER : suplente
+```
+
+### 3. Ejemplo de flujo
+
+1. El admin crea una `UnifiedReservation` para el grupo el sábado (total 12 plazas).
+2. Se crean 3 `Reservation` individuales (3 pistas, diferentes horas).
+3. Se crea un `Match` sobre la `UnifiedReservation` y los usuarios se inscriben como participantes/suplentes sobre el total de plazas.
+4. El sistema gestiona la inscripción y el reemplazo automático de suplentes.
+
+### 4. Ventajas del modelo
+
+- Flexibilidad para deportes con varias pistas/espacios.
+- Gestión clara de plazas y suplentes.
+- Permite unificar reservas y gestionar eventos conjuntos.
+- Mantiene la lógica deportiva separada de la lógica de reservas.
+
+### 5. Ejemplo de entidades TypeORM
+
+#### unifiedReservation.entity.ts
+```typescript
+@Entity()
+export class UnifiedReservation {
+	@PrimaryGeneratedColumn('uuid')
+	id: string;
+
+	@Column()
+	date: Date;
+
+	@ManyToOne(() => Group)
+	group: Group;
+
+	@Column()
+	totalSlots: number;
+
+	@OneToMany(() => Reservation, (reservation) => reservation.unifiedReservation)
+	reservations: Reservation[];
+
+	@OneToMany(() => Match, (match) => match.unifiedReservation)
+	matches: Match[];
+}
+```
+
+#### reservation.entity.ts
+```typescript
+@Entity()
+export class Reservation {
+	@PrimaryGeneratedColumn('uuid')
+	id: string;
+
+	@ManyToOne(() => UnifiedReservation, (ur) => ur.reservations)
+	unifiedReservation: UnifiedReservation;
+
+	@ManyToOne(() => Group)
+	group: Group;
+
+	@Column()
+	date: Date;
+
+	@Column()
+	time: string;
+
+	@Column()
+	courts: number;
+
+	@ManyToOne(() => User)
+	creator: User;
+}
+```
+
+#### match.entity.ts
+```typescript
+@Entity()
+export class Match {
+	@PrimaryGeneratedColumn('uuid')
+	id: string;
+
+	@ManyToOne(() => UnifiedReservation, (ur) => ur.matches)
+	unifiedReservation: UnifiedReservation;
+
+	@ManyToOne(() => Group)
+	group: Group;
+
+	@Column()
+	sport: string;
+
+	@Column()
+	maxParticipants: number;
+
+	@ManyToMany(() => User)
+	@JoinTable()
+	participants: User[];
+
+	@ManyToMany(() => User)
+	@JoinTable()
+	substitutes: User[];
+
+	@ManyToOne(() => User)
+	createdBy: User;
+}
+```
+
+### 6. Endpoints REST recomendados
+
+- `/api/unified-reservations` — CRUD de reservas agrupadas.
+- `/api/reservations` — CRUD de reservas individuales.
+- `/api/matches` — CRUD de partidos/eventos.
+- `/api/unified-reservations/:id/matches` — Listar partidos de una reserva agrupada.
+- `/api/matches/:id/inscripcion` — Inscribir participante.
+- `/api/matches/:id/suplentes` — Inscribir suplente.
+
+### 7. Lógica de negocio clave
+
+- Al crear una reserva agrupada, se pueden asociar varias reservas individuales.
+- Los partidos/eventos se crean sobre una reserva agrupada y gestionan la inscripción de usuarios.
+- El sistema permite reemplazo automático de suplentes y notificaciones.
+
+### 8. Consideraciones para el desarrollador
+
+- Mantener la separación de responsabilidades entre reservas y partidos/eventos.
+- Validar siempre la existencia y disponibilidad de plazas antes de inscribir participantes.
+- Documentar y testear los endpoints y la lógica de reemplazo de suplentes.
+
+---
+
+Esta sección debe servir como referencia principal para cualquier desarrollador que implemente o extienda la gestión de reservas y partidos/eventos en el backend.
