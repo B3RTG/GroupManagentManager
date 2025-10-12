@@ -1,11 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Group } from './entities/group.entity';
-import { GroupMembership, GroupRole } from './entities/group-membership.entity';
-import { GroupInvitation, InvitationStatus } from './entities/group-invitation.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateGroupDto, UpdateGroupDto, AddMemberDto } from './dto';
+import { Group, GroupMembership, GroupInvitation, GroupRole, InvitationStatus } from './entities'
 
 type GroupWithOwner = Group & { owner: { id: string; name?: string } | null };
 
