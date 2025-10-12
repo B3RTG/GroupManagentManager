@@ -226,6 +226,9 @@ erDiagram
 		UNIFIEDRESERVATION ||--o{ MATCH : tiene
 		MATCH ||--o{ USER : participa
 		MATCH ||--o{ USER : suplente
+		MATCH ||--o{ USER : participa
+		MATCH ||--o{ USER : suplente
+		MATCH ||--o{ GUEST : invitado
 ```
 
 ### 3. Ejemplo de flujo
@@ -335,10 +338,12 @@ export class Match {
 - `/api/unified-reservations/:id/matches` — Listar partidos de una reserva agrupada.
 - `/api/matches/:id/inscripcion` — Inscribir participante.
 - `/api/matches/:id/suplentes` — Inscribir suplente.
+- `/api/matches/:id/guests` — POST — Añadir invitados a un partido/evento.
+- `/api/matches/:id` — GET — Listar participantes y invitados
 
 ### 7. Lógica de negocio clave
 
-- Al crear una reserva agrupada, se pueden asociar varias reservas individuales.
+- Al crear una reserva agrupada, se pueden asociar varias reservas individuales. Tambien se podrá hacer a posteriori. si ya existe una reserva-unificada para el mismo dia/hora.
 - Los partidos/eventos se crean sobre una reserva agrupada y gestionan la inscripción de usuarios.
 - El sistema permite reemplazo automático de suplentes y notificaciones.
 
@@ -348,6 +353,16 @@ export class Match {
 - Validar siempre la existencia y disponibilidad de plazas antes de inscribir participantes.
 - Documentar y testear los endpoints y la lógica de reemplazo de suplentes.
 
+### 9. Gestión de Invitados Externos
+
+- Los grupos pueden permitir la inscripción de personas externas (invitados) que no tienen usuario en la aplicación.
+- Los invitados se inscriben con un nombre/mote y, opcionalmente, información de contacto.
+- Los invitados pueden participar en partidos/eventos igual que los usuarios registrados, pero no tienen acceso a la app ni funcionalidades de usuario.
+- El sistema debe diferenciar visualmente entre usuarios y invitados en las listas de participantes y suplentes.
+
+#### 9.1 Ejemplo de flujo
+- Un usuario del grupo inscribe a un invitado externo en un partido, añadiendo su nombre/mote. 
+- El invitado aparece en la lista de participantes, pero no tiene acceso a la app ni funcionalidades de usuario.
 ---
 
 Esta sección debe servir como referencia principal para cualquier desarrollador que implemente o extienda la gestión de reservas y partidos/eventos en el backend.
