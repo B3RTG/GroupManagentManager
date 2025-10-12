@@ -111,6 +111,7 @@ npm run build     // Build
 npm run typeorm migration:generate -- nombre_migracion -d ./src/data-source.ts // generar nueva migración
 // npx typeorm migration:run -d ./src/data-source.ts // subir migración a servidor
 npm run typeorm migration:run -- -d src/data-source.ts
+npm run typeorm migration:generate -- src/migrations/reservation-creators-update -d src/data-source.ts
 ```
 
 

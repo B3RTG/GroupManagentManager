@@ -1,7 +1,9 @@
 import { User } from "../../users/entities/user.entity";
 import { Group } from "../../groups/entities/group.entity";
 import { UnifiedReservation } from "../../unified-reservations/entities/unifiedReservation.entity";
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm"
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm"
+
+export type ReservationStatus = 'actv' | 'canc' | 'ended'
 
 @Entity()
 export class Reservation {
@@ -14,9 +16,6 @@ export class Reservation {
   @ManyToOne(() => Group, { nullable: false })
   group: Group;
 
-  @CreateDateColumn()
-  createdAt: Date;
-
   @Column()
   date: Date;
 
@@ -25,5 +24,22 @@ export class Reservation {
 
   @ManyToOne(() => User, { nullable: false })
   creator: User;
+
+  @Column({
+    type: 'enum',
+    enum: [
+      'actv',
+      'canc',
+      'ended'
+    ],
+    default: 'actv'
+  })
+  status: ReservationStatus;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 
 }
