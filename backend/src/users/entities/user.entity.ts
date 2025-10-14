@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { GroupMembership } from '../../groups/entities/group-membership.entity';
 
 export type UserRole = 'user' | 'admin';
@@ -41,4 +42,22 @@ export class User {
 
   @OneToMany(() => GroupMembership, (membership) => membership.user)
   memberships: GroupMembership[];
+
+  @Column({ nullable: true })
+  avatarUrl?: string;
+
+  @Column({ nullable: true })
+  phoneNumber?: string;
+
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastLogin?: Date;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

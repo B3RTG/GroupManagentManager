@@ -9,6 +9,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { RegisterDto } from './dto/register.dto';
+import { plainToInstance } from 'class-transformer';
+import { AuthUserResponseDto } from './dto/auth-user-response.dto';
 import { User } from '../users/entities/user.entity';
 import { Console } from 'console';
 
@@ -23,9 +25,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
-  async register(data: RegisterDto): Promise<{ user: User; token: string }> {
+  async register(data: RegisterDto): Promise<{ user: AuthUserResponseDto; token: string }> {
     const exists = await this.userRepository.findOne({
       where: { email: data.email },
     });
@@ -43,10 +45,11 @@ export class AuthService {
       email: user.email,
       role: user.role,
     });
-    return { user, token };
+    const userResponse = plainToInstance(AuthUserResponseDto, user, { excludeExtraneousValues: true });
+    return { user: userResponse, token };
   }
 
-  async login(data: LoginDto): Promise<{ user: User; token: string }> {
+  async login(data: LoginDto): Promise<{ user: AuthUserResponseDto; token: string }> {
     if (!data || !data.email || !data.password)
       throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
 
@@ -58,12 +61,18 @@ export class AuthService {
     const valid = await bcrypt.compare(data.password, user.password);
     if (!valid)
       throw new UnauthorizedException('Usuario y/o contraseña incorrectos');
+
+    // Actualizar el campo lastLogin
+    user.lastLogin = new Date();
+    await this.userRepository.save(user);
+
     const token = this.jwtService.sign({
       sub: user.id,
       email: user.email,
       role: user.role,
     });
-    return { user, token };
+    const userResponse = plainToInstance(AuthUserResponseDto, user, { excludeExtraneousValues: true });
+    return { user: userResponse, token };
   }
 
   async validateOrCreateSocialUser(socialUser: {
@@ -72,7 +81,7 @@ export class AuthService {
     provider: 'google' | 'facebook';
     googleId?: string;
     facebookId?: string;
-  }): Promise<{ user: User; token: string }> {
+  }): Promise<{ user: AuthUserResponseDto; token: string }> {
     let user = await this.userRepository.findOne({
       where: { email: socialUser.email },
     });
@@ -99,6 +108,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
     });
-    return { user, token };
+    const userResponse = plainToInstance(AuthUserResponseDto, user, { excludeExtraneousValues: true });
+    return { user: userResponse, token };
   }
 }

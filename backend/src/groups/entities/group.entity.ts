@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { GroupMembership } from './group-membership.entity';
 
 @Entity()
@@ -14,4 +14,19 @@ export class Group {
 
   @Column({ default: false })
   allCanManageEvents: boolean;
+
+  @Column({ nullable: true })
+  description?: string;
+
+  @Column({ nullable: true })
+  location?: string;
+
+  @Column({ default: true })
+  isActive: boolean;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

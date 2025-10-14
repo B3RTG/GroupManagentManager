@@ -10,6 +10,8 @@ import {
   Body,
   Delete,
 } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { UserResponseDto } from './dto/user-response.dto';
 import { GetUsersDto } from './dto/get-users.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -20,7 +22,7 @@ import { User } from './entities/user.entity';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Put('me')
   @UseGuards(AuthGuard('jwt'))
@@ -31,8 +33,18 @@ export class UsersController {
   ) {
     try {
       const userId = req.user.id;
-      const user = await this.usersService.updateUser(userId, body);
-      return user;
+      const updateData: Partial<User> = {
+        name: body.name,
+        username: body.username,
+        email: body.email,
+        preferredSports: body.preferredSports,
+        avatarUrl: body.avatarUrl,
+        phoneNumber: body.phoneNumber,
+        isActive: body.isActive,
+        lastLogin: body.lastLogin ? new Date(body.lastLogin) : undefined,
+      };
+      const user = await this.usersService.updateUser(userId, updateData);
+      return plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true });
     } catch (error) {
       if (error instanceof Error) {
         return { error: error.message };
@@ -50,8 +62,18 @@ export class UsersController {
     body: UpdateUserDto,
   ) {
     try {
-      const user = await this.usersService.updateUser(id, body);
-      return user;
+      const updateData: Partial<User> = {
+        name: body.name,
+        username: body.username,
+        email: body.email,
+        preferredSports: body.preferredSports,
+        avatarUrl: body.avatarUrl,
+        phoneNumber: body.phoneNumber,
+        isActive: body.isActive,
+        lastLogin: body.lastLogin ? new Date(body.lastLogin) : undefined,
+      };
+      const user = await this.usersService.updateUser(id, updateData);
+      return plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true });
     } catch (error) {
       if (error instanceof Error) {
         return { error: error.message };
@@ -71,7 +93,7 @@ export class UsersController {
       ? query.fields.split(',').map((f) => f.trim())
       : undefined;
     const filters = { search: query.search, role: query.role };
-    return this.usersService.findAll({
+    const result = await this.usersService.findAll({
       page: query.page,
       limit: query.limit,
       filters,
@@ -79,13 +101,17 @@ export class UsersController {
       orderBy: query.orderBy,
       orderDir: query.orderDir,
     });
+    return {
+      ...result,
+      data: result.data.map((user: any) => plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true }))
+    };
   }
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   getMe(@Req() req: { user: any }): any {
     // req.user viene del JWT
-    return req.user;
+    return plainToInstance(UserResponseDto, req.user, { excludeExtraneousValues: true });
   }
 
   @Delete(':id')

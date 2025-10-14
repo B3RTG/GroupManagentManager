@@ -7,4 +7,16 @@ export class CreateGroupDto {
   @IsOptional()
   @IsBoolean()
   allCanManageEvents?: boolean;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  location?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

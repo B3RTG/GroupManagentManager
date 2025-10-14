@@ -13,7 +13,7 @@ export const AppDataSource = new DataSource({
   type: 'postgres',
   url:
     process.env.DATABASE_URL,
-  entities: [User, Group, GroupMembership, GroupInvitation, UnifiedReservation, Reservation, Match, Guest],
+  entities: [User, Group, GroupMembership, GroupInvitation], //, UnifiedReservation, Reservation, Match, Guest
   migrations: ['dist/migrations/*.js'],
   synchronize: false,
 });
