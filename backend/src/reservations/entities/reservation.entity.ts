@@ -1,9 +1,13 @@
 import { User } from "../../users/entities/user.entity";
 import { Group } from "../../groups/entities/group.entity";
-import { UnifiedReservation } from "../../unified-reservations/entities/unifiedReservation.entity";
+import { UnifiedReservation } from "../../unified-reservations/entities/unified-reservation.entity";
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm"
 
-export type ReservationStatus = 'actv' | 'canc' | 'ended'
+export enum ReservationStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  CANCELLED = 'cancelled'
+}
 
 @Entity()
 export class Reservation {
@@ -16,23 +20,20 @@ export class Reservation {
   @ManyToOne(() => Group, { nullable: false })
   group: Group;
 
+
   @Column()
   date: Date;
 
   @Column()
-  courts: number;
+  resourceId: string; // ID de la pista/espacio reservado
 
   @ManyToOne(() => User, { nullable: false })
-  creator: User;
+  createdBy: User;
 
   @Column({
     type: 'enum',
-    enum: [
-      'actv',
-      'canc',
-      'ended'
-    ],
-    default: 'actv'
+    enum: ReservationStatus,
+    default: ReservationStatus.PENDING
   })
   status: ReservationStatus;
 

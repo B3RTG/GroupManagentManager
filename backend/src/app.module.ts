@@ -19,7 +19,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 // entities
 import { User } from './users/entities/user.entity';
 import { Group, GroupMembership, GroupInvitation } from './groups/entities';
-import { Reservation, UnifiedReservation, Match, Guest } from './reservations/entities';
+import { Reservation, UnifiedReservation, Match, Guest, MatchParticipant } from './reservations/entities';
 
 @Module({
   imports: [
@@ -30,7 +30,7 @@ import { Reservation, UnifiedReservation, Match, Guest } from './reservations/en
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.get<string>('DATABASE_URL'),
-        entities: [User, Group, GroupMembership, GroupInvitation, UnifiedReservation, Reservation, Match, Guest],
+        entities: [User, Group, GroupMembership, GroupInvitation, UnifiedReservation, Reservation, Match, Guest, MatchParticipant],
         synchronize: false,
       }),
     }),

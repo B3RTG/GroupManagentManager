@@ -3,7 +3,7 @@ import { ReservationsController } from './reservations.controller';
 import { ReservationsService } from './reservations.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Reservation } from './entities/reservation.entity';
-import { UnifiedReservation } from '../unified-reservations/entities/unifiedReservation.entity';
+import { UnifiedReservation } from '../unified-reservations/entities/unified-reservation.entity';
 import { Group } from '../groups/entities/group.entity';
 import { User } from '../users/entities/user.entity';
 
