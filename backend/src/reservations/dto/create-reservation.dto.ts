@@ -1,21 +1,22 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsUUID, IsDateString, IsString, IsInt, Min } from 'class-validator';
 
 export class CreateReservationDto {
+    @IsUUID()
+    unifiedReservationId: string;
 
-    @IsString()
-    @IsOptional()
-    unifiedReservationId?: string;
-
-
-    @IsString()
+    @IsUUID()
     groupId: string;
 
-    @IsString()
-    creatorId: string;
+    @IsUUID()
+    createdBy: string;
+
+    @IsDateString()
+    date: string;
 
     @IsString()
-    date: Date;
+    resourceId: string;
 
-    @IsOptional()
-    court?: number;
+    @IsInt()
+    @Min(1)
+    slots: number;
 }
