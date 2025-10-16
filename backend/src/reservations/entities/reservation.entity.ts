@@ -30,6 +30,9 @@ export class Reservation {
   @ManyToOne(() => User, { nullable: false })
   createdBy: User;
 
+  @Column({ default: 4 })
+  slots: number; // Número de plazas para esta reserva individual (por defecto 4 para pádel)
+
   @Column({
     type: 'enum',
     enum: ReservationStatus,
