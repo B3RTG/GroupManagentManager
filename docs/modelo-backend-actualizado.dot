@@ -1,0 +1,37 @@
+digraph {
+  rankdir=LR;
+
+  user [label="user | id | name | username | email | role | password | googleId | facebookId | provider | preferredSports | avatarUrl | phoneNumber | isActive | lastLogin | createdAt | updatedAt", shape=record];
+  group [label="group | id | name | description | location | allCanManageEvents | isActive | createdAt | updatedAt", shape=record];
+  group_membership [label="group_membership | id | user_id | group_id | role (OWNER, ADMIN, MEMBER) | joinedAt", shape=record];
+
+  unified_reservation [label="unified_reservation | id | group_id | date | time | status (ACTIVE, CANCELLED, FINISHED) | createdBy | createdAt | updatedAt", shape=record];
+  reservation [label="reservation | id | unified_reservation_id | group_id | resource_id | date | slots | status (PENDING, CONFIRMED, CANCELLED) | createdBy | createdAt | updatedAt", shape=record];
+
+  participant [label="participant | id | unified_reservation_id | user_id | type (PRINCIPAL, SUBSTITUTE) | status (ACTIVE, PROMOTED, REMOVED) | createdAt", shape=record];
+  guest [label="guest | id | unified_reservation_id | name | email | status (PENDING, ACCEPTED, REJECTED) | type (PRINCIPAL, SUBSTITUTE) | createdBy | createdAt", shape=record];
+
+  match [label="match | id | unified_reservation_id | date | resultado | estado", shape=record];
+  match_player [label="match_player | id | match_id | user_id | guest_id | equipo | stats", shape=record];
+
+  group_invitation [label="group_invitation | id | group_id | invited_user_id | status (pending, accepted, declined, expired) | createdAt | expiresAt", shape=record];
+  
+  user -> group_membership;
+  group -> group_membership;
+  group -> unified_reservation;
+  unified_reservation -> reservation;
+  unified_reservation -> participant;
+  unified_reservation -> guest;
+  unified_reservation -> match;
+  // lo quito por claridad del esquema final generado
+  // user -> unified_reservation [label="createdBy"];
+  match -> match_player;
+  user -> match_player;
+  guest -> match_player;
+  user -> participant;
+  user -> guest [label="createdBy"];
+  group -> group_invitation;
+  user -> group_invitation [label="invitedUser"];
+  // lo quito por claridad del esquema final generado
+  // user -> reservation [label="createdBy"];
+}

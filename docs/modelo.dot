@@ -1,0 +1,27 @@
+digraph {
+  rankdir=LR;
+
+  jugador [label="jugador | id | nombre | email | nivel | disponibilidad", shape=record];
+  grupo [label="grupo | id | nombre | descripcion", shape=record];
+  jugador_grupo [label="jugador_grupo | jugador_id | grupo_id | rol", shape=record];
+  reserva [label="reserva | id | grupo_id | fecha | duracion | pista | estado | plazas", shape=record];
+  evento [label="evento | id | grupo_id | nombre | fecha | tipo | estado | plazas_max", shape=record];
+  evento_reserva [label="evento_reserva | evento_id | reserva_id", shape=record];
+  inscripcion [label="inscripcion | id | evento_id | jugador_id | estado | orden_reserva", shape=record];
+  partido [label="partido | id | evento_id | fecha | pista | estado", shape=record];
+  jugador_partido [label="jugador_partido | partido_id | jugador_id | equipo", shape=record];
+  resultado [label="resultado | id | partido_id | set_numero | juegos_eq1 | juegos_eq2", shape=record];
+
+  jugador -> jugador_grupo;
+  grupo -> jugador_grupo;
+  grupo -> reserva;
+  grupo -> evento;
+  evento -> evento_reserva;
+  reserva -> evento_reserva;
+  evento -> inscripcion;
+  jugador -> inscripcion;
+  evento -> partido;
+  partido -> jugador_partido;
+  jugador -> jugador_partido;
+  partido -> resultado;
+}

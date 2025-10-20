@@ -4,9 +4,10 @@ import { Repository, In } from 'typeorm';
 import { CreateUnifiedReservationDto, UpdateUnifiedReservationDto } from './dto';
 import { CreateReservationDto } from '../reservations/dto/create-reservation.dto';
 import { CreateMatchDto, UpdateMatchDto } from '../matches/dto';
-import { Reservation, UnifiedReservation, Match, MatchStatus } from '../reservations/entities';
+import { Match, MatchStatus } from '../matches/entities';
+import { Reservation } from '../reservations/entities';
 import { ReservationStatus } from '../reservations/entities/reservation.entity';
-import { UnifiedReservationStatus } from './entities/unified-reservation.entity';
+import { UnifiedReservationStatus, UnifiedReservation, Guest, Participant } from './entities';
 import { Group } from '../groups/entities/group.entity';
 import { User } from '../users/entities/user.entity';
 
@@ -25,7 +26,6 @@ export class UnifiedReservationsService {
         private readonly matchRepo: Repository<Match>,
     ) { }
     async findAllForUser(userId: string, query: any) {
-        // Buscar los grupos donde el usuario es miembro
         // Buscar los grupos donde el usuario es miembro
         const memberships = await this.groupRepo.manager.getRepository('GroupMembership').find({
             where: { user: { id: userId } },
@@ -159,12 +159,9 @@ export class UnifiedReservationsService {
         const match = new Match();
         match.unifiedReservation = unifiedReservation;
         match.group = unifiedReservation.group;
-        match.sport = dto.sport;
         match.date = new Date(dto.date);
         match.time = dto.time;
         match.status = MatchStatus.SCHEDULED;
-        match.maxParticipants = dto.maxParticipants;
-        match.maxSubstitutes = dto.maxSubstitutes;
         match.createdBy = user;
         match.createdAt = new Date();
         match.updatedAt = new Date();

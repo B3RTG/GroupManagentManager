@@ -1,7 +1,8 @@
 import { User } from "../../users/entities/user.entity";
 import { Group } from "../../groups/entities/group.entity";
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from "typeorm"
-import { UnifiedReservation, MatchParticipant, Guest } from "../../reservations/entities";
+import { UnifiedReservation } from "../../unified-reservations/entities";
+import { Player } from "./player.entity";
 
 
 export enum MatchStatus {
@@ -13,7 +14,6 @@ export enum MatchStatus {
 
 @Entity()
 export class Match {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -22,10 +22,6 @@ export class Match {
 
   @ManyToOne(() => Group)
   group: Group;
-
-
-  @Column()
-  sport: string;
 
   @Column()
   date: Date;
@@ -40,18 +36,11 @@ export class Match {
   })
   status: MatchStatus; // scheduled, ongoing, finished, cancelled
 
-  @Column({ default: 0 })
-  maxParticipants: number;
+  @Column({ nullable: true })
+  result?: string; // Match result (JSON, string, etc.)
 
-  @Column({ default: 0 })
-  maxSubstitutes: number;
-
-  @OneToMany(() => MatchParticipant, (mp) => mp.match)
-  participants: MatchParticipant[]; // Todos los inscritos (principal, suplente, eliminado)
-
-  @OneToMany(() => Guest, (guest) => guest.match)
-  guests: Guest[]; // Invitados (principal o suplente, según campo type)
-
+  @OneToMany(() => Player, (player) => player.match)
+  players: Player[]; // Todos los inscritos (principal, suplente, eliminado)
 
   @ManyToOne(() => User)
   createdBy: User;

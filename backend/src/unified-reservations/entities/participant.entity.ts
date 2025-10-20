@@ -1,5 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, Column, CreateDateColumn } from "typeorm";
-import { Match } from "./match.entity";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { UnifiedReservation } from "./unified-reservation.entity";
 import { User } from "../../users/entities/user.entity";
 
 export enum ParticipantType {
@@ -15,12 +15,13 @@ export enum ParticipantStatus {
 }
 
 @Entity()
-export class MatchParticipant {
+export class Participant {
+
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @ManyToOne(() => Match, (match) => match.participants, { nullable: false })
-    match: Match;
+    @ManyToOne(() => UnifiedReservation, (ur) => ur.participants, { nullable: false })
+    unifiedReservation: UnifiedReservation;
 
     @ManyToOne(() => User, { nullable: false })
     user: User;
@@ -41,4 +42,5 @@ export class MatchParticipant {
 
     @CreateDateColumn()
     createdAt: Date;
+
 }
