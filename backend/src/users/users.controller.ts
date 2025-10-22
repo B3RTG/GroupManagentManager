@@ -19,12 +19,18 @@ import { UsersService } from './users.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { User } from './entities/user.entity';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
 
+@ApiTags('users')
+@ApiBearerAuth()
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Put('me')
+  @ApiOperation({ summary: 'Actualizar mi perfil de usuario' })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse({ status: 200, type: UserResponseDto })
   @UseGuards(AuthGuard('jwt'))
   async updateMe(
     @Req() req: { user: User },
@@ -54,6 +60,10 @@ export class UsersController {
   }
 
   @Put(':id')
+  @ApiOperation({ summary: 'Actualizar usuario por ID (admin)' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse({ status: 200, type: UserResponseDto })
   @Roles('admin')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   async updateUser(
@@ -83,6 +93,15 @@ export class UsersController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar usuarios (admin)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'role', required: false, type: String })
+  @ApiQuery({ name: 'fields', required: false, type: String })
+  @ApiQuery({ name: 'orderBy', required: false, type: String })
+  @ApiQuery({ name: 'orderDir', required: false, enum: ['ASC', 'DESC'] })
+  @ApiResponse({ status: 200, description: 'Lista paginada de usuarios', type: [UserResponseDto] })
   @Roles('admin')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   async getUsers(
@@ -108,6 +127,8 @@ export class UsersController {
   }
 
   @Get('me')
+  @ApiOperation({ summary: 'Obtener mi perfil de usuario' })
+  @ApiResponse({ status: 200, type: UserResponseDto })
   @UseGuards(AuthGuard('jwt'))
   getMe(@Req() req: { user: any }): any {
     // req.user viene del JWT
@@ -115,6 +136,9 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar usuario por ID (admin)' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: 200, description: 'Usuario eliminado correctamente.' })
   @Roles('admin')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   async deleteUser(@Param('id') id: string) {
