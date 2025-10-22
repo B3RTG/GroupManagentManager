@@ -10,16 +10,19 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({
     //skipMissingProperties: true,
   }));
-  // --- Swagger config ---
-  const config = new DocumentBuilder()
-    .setTitle('Group Management API')
-    .setDescription('Documentación de la API para gestión de grupos, reservas y partidos')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  // --- Swagger config solo en desarrollo o no-producción ---
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Group Management API')
+      .setDescription('Documentación de la API para gestión de grupos, reservas y partidos')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
   // --- Fin Swagger config ---
 
   await app.listen(process.env.PORT ?? 3000);
