@@ -3,11 +3,25 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { skip } from 'rxjs';
 
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe({
     //skipMissingProperties: true,
   }));
+  // --- Swagger config ---
+  const config = new DocumentBuilder()
+    .setTitle('Group Management API')
+    .setDescription('Documentación de la API para gestión de grupos, reservas y partidos')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);
+  // --- Fin Swagger config ---
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap().catch((err) => {
