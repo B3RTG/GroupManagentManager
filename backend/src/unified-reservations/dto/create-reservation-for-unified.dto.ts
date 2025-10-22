@@ -1,9 +1,7 @@
-import { IsUUID, IsDateString, IsString, IsInt, Min } from 'class-validator';
 
-export class CreateReservationDto {
-    @IsUUID()
-    unifiedReservationId: string;
+import { IsUUID, IsDateString, IsInt, Min } from 'class-validator';
 
+export class CreateReservationForUnifiedDto {
     @IsUUID()
     groupId: string;
 

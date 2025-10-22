@@ -1,10 +1,14 @@
 
 import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
+import { ParticipantType } from './entities/participant.entity';
+import { GuestType } from './entities/guest.entity';
+import { CreateGuestDto } from './dto/create-guest.dto';
+import { UnifiedReservationsQueryDto } from './dto/unified-reservations-query.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { UnifiedReservationsService } from './unified-reservations.service';
 import { CreateUnifiedReservationDto } from './dto/create-unified-reservation.dto';
 import { UpdateUnifiedReservationDto } from './dto/update-unified-reservation.dto';
-import { CreateReservationDto } from '../reservations/dto/create-reservation.dto';
+import { CreateReservationForUnifiedDto } from './dto/create-reservation-for-unified.dto';
 import { CreateMatchDto } from '../matches/dto/create-match.dto';
 import { UpdateMatchDto } from '../matches/dto/update-match.dto';
 import { UnifiedReservationRoleGuard } from './guards/unified-reservation-role.guard';
@@ -16,10 +20,21 @@ import { GroupRole } from '../groups/entities/group-membership.entity';
 export class UnifiedReservationsController {
     constructor(private readonly service: UnifiedReservationsService) { }
 
+    /**
+     * GET /unified-reservations?includeGroup=true&includeMatches=true&includeReservations=true
+     * Puedes pasar los flags como query params para incluir relaciones opcionales.
+     * Ejemplo: /unified-reservations?includeGroup=true&includeMatches=true
+     */
     @Get()
-    findAll(@Query() query: any, @Req() req: any) {
-        // req.user.id es el usuario autenticado, lo carga el AuthGuard
-        return this.service.findAllForUser(req.user.id, query);
+    findAll(@Query() query: UnifiedReservationsQueryDto, @Req() req: any) {
+        // Normalizar los flags a booleanos, por defecto participantes/invitados true
+        const normalizedQuery = {
+            includeGroup: query.includeGroup === 'true',
+            includeMatches: query.includeMatches === 'true',
+            includeReservations: query.includeReservations === 'true',
+            includeParticipantsAndGuests: query.includeParticipantsAndGuests !== 'false',
+        };
+        return this.service.findAllForUser(req.user.id, normalizedQuery);
     }
 
 
@@ -32,7 +47,12 @@ export class UnifiedReservationsController {
 
     @Get(':id')
     findOne(@Param('id') id: string) {
-        return this.service.findOne(id);
+        return this.service.findOne(id, false);
+    }
+
+    @Get(':id/details')
+    findDetails(@Param('id') id: string) {
+        return this.service.findOne(id, true);
     }
 
     @Put(':id')
@@ -45,12 +65,46 @@ export class UnifiedReservationsController {
         return this.service.remove(id);
     }
 
+    // Participantes e invitados
+
+    @Post(':id/participants')
+    addParticipant(
+        @Param('id') id: string,
+        @Body() dto: { userId: string; type?: ParticipantType }
+    ) {
+        return this.service.addParticipant(id, dto.userId, dto.type ?? ParticipantType.PRINCIPAL);
+    }
+
+    @Delete(':id/participants/:participantId')
+    removeParticipant(@Param('id') id: string, @Param('participantId') participantId: string) {
+        return this.service.removeParticipant(id, participantId);
+    }
+
+    @Post(':id/guests')
+    addGuest(@Param('id') id: string, @Body() dto: CreateGuestDto, @Req() req: any) {
+        if (!dto.createdBy) {
+            dto.createdBy = req.user.id;
+        }
+        return this.service.addGuest(id, dto);
+    }
+
+    @Delete(':id/guests/:guestId')
+    removeGuest(@Param('id') id: string, @Param('guestId') guestId: string) {
+        return this.service.removeGuest(id, guestId);
+    }
+
+    @Get(':id/participants-and-guests')
+    listParticipantsAndGuests(@Param('id') id: string) {
+        return this.service.listParticipantsAndGuests(id);
+    }
+
+
     // Reservas individuales
 
     @Post(':id/reservations')
     @UseGuards(UnifiedReservationRoleGuard)
     @GroupRoles(GroupRole.OWNER, GroupRole.ADMIN)
-    addReservation(@Param('id') id: string, @Body() dto: CreateReservationDto) {
+    addReservation(@Param('id') id: string, @Body() dto: CreateReservationForUnifiedDto) {
         return this.service.addReservation(id, dto);
     }
 

@@ -1,15 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { CreateUnifiedReservationDto, UpdateUnifiedReservationDto } from './dto';
-import { CreateReservationDto } from '../reservations/dto/create-reservation.dto';
 import { CreateMatchDto, UpdateMatchDto } from '../matches/dto';
 import { Match, MatchStatus } from '../matches/entities';
 import { Reservation } from '../reservations/entities';
 import { ReservationStatus } from '../reservations/entities/reservation.entity';
 import { UnifiedReservationStatus, UnifiedReservation, Guest, Participant } from './entities';
+import { ParticipantType } from './entities/participant.entity';
+import { GuestType } from './entities/guest.entity';
+import { plainToInstance } from 'class-transformer';
 import { Group } from '../groups/entities/group.entity';
 import { User } from '../users/entities/user.entity';
+
+import { DisponibilityDto, CreateGuestDto, CreateReservationForUnifiedDto, CreateUnifiedReservationDto, UnifiedReservationReadDto, UpdateUnifiedReservationDto } from './dto';
 
 @Injectable()
 export class UnifiedReservationsService {
@@ -25,6 +28,8 @@ export class UnifiedReservationsService {
         @InjectRepository(Match)
         private readonly matchRepo: Repository<Match>,
     ) { }
+
+
     async findAllForUser(userId: string, query: any) {
         // Buscar los grupos donde el usuario es miembro
         const memberships = await this.groupRepo.manager.getRepository('GroupMembership').find({
@@ -33,28 +38,24 @@ export class UnifiedReservationsService {
         });
         const groupIds = memberships.map((m: any) => m.group.id);
         if (groupIds.length === 0) return [];
-        // Buscar reservas unificadas de esos grupos
+
+        // Construir relaciones dinámicamente según los flags
+        const relations: string[] = [];
+        if (query.includeGroup) relations.push('group');
+        if (query.includeMatches) relations.push('matches');
+        if (query.includeReservations) relations.push('reservations');
+        if (query.includeParticipantsAndGuests !== false) {
+            relations.push('participants', 'guests');
+        }
+
         return await this.unifiedReservationRepo.find({
             where: { group: { id: In(groupIds) } },
-            relations: ['group', 'matches'],
+            relations,
             order: { date: 'DESC', time: 'DESC' },
         });
     }
 
     async create(dto: CreateUnifiedReservationDto) {
-        // Validar que no exista ya una reserva unificada para el mismo grupo, fecha y hora
-        const exists = await this.unifiedReservationRepo.findOne({
-            where: {
-                group: { id: dto.groupId },
-                date: new Date(dto.date),
-                time: dto.time,
-            },
-            relations: ['group'],
-        });
-        if (exists) {
-            throw new Error('Ya existe una reserva unificada para este grupo, fecha y hora');
-        }
-
         // Buscar el grupo
         const group = await this.groupRepo.findOne({ where: { id: dto.groupId } });
         if (!group) {
@@ -74,9 +75,33 @@ export class UnifiedReservationsService {
         return unifiedReservation;
     }
 
-    findOne(id: string) {
-        // TODO: Implementar lógica para consultar una reserva unificada
-        return {};
+    async findOne(id: string, showDisponibility: boolean = false): Promise<UnifiedReservationReadDto | null> {
+        // Cargar la reserva unificada con relaciones
+        const unifiedReservation = await this.unifiedReservationRepo.findOne({
+            where: { id },
+            relations: [
+                'group',
+                'matches',
+                'reservations',
+                'participants',
+                'guests',
+            ],
+        });
+        if (!unifiedReservation) return null;
+
+        // Calcular ocupación si se requiere
+
+        let disponibility: DisponibilityDto | undefined = undefined;
+        if (showDisponibility) {
+            disponibility = await this.calculateFullDisponibility(id);
+        }
+
+        // Mapear a DTO
+        const dto = plainToInstance(UnifiedReservationReadDto, {
+            ...unifiedReservation,
+            disponibility,
+        });
+        return dto;
     }
 
     update(id: string, dto: UpdateUnifiedReservationDto) {
@@ -89,17 +114,22 @@ export class UnifiedReservationsService {
         return {};
     }
 
-    async addReservation(unifiedReservationId: string, dto: CreateReservationDto) {
+    async addReservation(unifiedReservationId: string, dto: CreateReservationForUnifiedDto) {
         // Validar que la reserva unificada existe y está activa
         const unifiedReservation = await this.unifiedReservationRepo.findOne({
             where: { id: unifiedReservationId },
             relations: ['group'],
         });
         if (!unifiedReservation) {
-            throw new Error('Reserva unificada no encontrada');
+            throw new BadRequestException('Reserva unificada no encontrada');
         }
         if (unifiedReservation.status !== UnifiedReservationStatus.ACTIVE) {
-            throw new Error('No se pueden añadir reservas a una reserva unificada no activa');
+            throw new BadRequestException('No se pueden añadir reservas a una reserva unificada no activa');
+        }
+
+        // revisar que la fecha de la reserva individual coincide con la de la reserva unificada
+        if (new Date(dto.date).toDateString() !== unifiedReservation.date.toDateString()) {
+            throw new BadRequestException('La fecha de la reserva individual debe coincidir con la de la reserva unificada');
         }
 
         // Cargar el usuario real
@@ -113,7 +143,7 @@ export class UnifiedReservationsService {
             unifiedReservation: unifiedReservation,
             group: unifiedReservation.group,
             date: new Date(dto.date),
-            resourceId: dto.resourceId,
+            // resourceId: dto.resourceId,
             createdBy: user,
             slots: dto.slots,
             status: ReservationStatus.CONFIRMED,
@@ -123,52 +153,15 @@ export class UnifiedReservationsService {
     }
 
     listReservations(unifiedReservationId: string) {
-        // TODO: Implementar lógica para listar reservas individuales
-        return [];
+        return this.reservationRepo.find({
+            where: { unifiedReservation: { id: unifiedReservationId } },
+            relations: ['group', 'createdBy'],
+        });
     }
 
     async createMatch(unifiedReservationId: string, dto: CreateMatchDto) {
-        // Validar que la reserva unificada existe y está activa
-        const unifiedReservation = await this.unifiedReservationRepo.findOne({
-            where: { id: unifiedReservationId },
-            relations: ['group', 'matches'],
-        });
-        if (!unifiedReservation) {
-            throw new Error('Reserva unificada no encontrada');
-        }
-        if (unifiedReservation.status !== UnifiedReservationStatus.ACTIVE) {
-            throw new Error('No se pueden añadir partidos a una reserva unificada no activa');
-        }
-
-        // Cargar el usuario creador
-        const user = await this.userRepo.findOne({ where: { id: dto.createdBy } });
-        if (!user) {
-            throw new Error('Usuario creador no encontrado');
-        }
-
-        // Validar que el total de participantes de todos los partidos no supere el total de plazas
-        // (esto requiere implementar calculateTotalSlots y sumar los maxParticipants de los partidos existentes)
-        // Suponemos que calculateTotalSlots está implementado correctamente
-        const totalSlots = await this.calculateTotalSlots(unifiedReservationId);
-        const currentParticipants = (unifiedReservation.matches || []).reduce((sum, m: any) => sum + (m.maxParticipants || 0), 0);
-        if (currentParticipants + dto.maxParticipants > totalSlots) {
-            throw new Error('El total de participantes de los partidos supera el total de plazas disponibles');
-        }
-
-        // Crear el partido asociado
-        const match = new Match();
-        match.unifiedReservation = unifiedReservation;
-        match.group = unifiedReservation.group;
-        match.date = new Date(dto.date);
-        match.time = dto.time;
-        match.status = MatchStatus.SCHEDULED;
-        match.createdBy = user;
-        match.createdAt = new Date();
-        match.updatedAt = new Date();
-
-        // Guardar el partido
-        await this.matchRepo.save(match);
-        return match;
+        // TODO: Implementar lógica para crear un partido
+        return {};
     }
 
     listMatches(unifiedReservationId: string) {
@@ -191,8 +184,184 @@ export class UnifiedReservationsService {
         return {};
     }
 
-    calculateTotalSlots(unifiedReservationId: string): Promise<number> {
-        // TODO: Implementar lógica para calcular el total de plazas
-        return Promise.resolve(0);
+    // Participantes e invitados
+    async listParticipantsAndGuests(unifiedReservationId: string) {
+        const participants = await this.unifiedReservationRepo.manager.getRepository(Participant).find({
+            where: { unifiedReservation: { id: unifiedReservationId } },
+            relations: ['user'],
+        });
+        const guests = await this.unifiedReservationRepo.manager.getRepository(Guest).find({
+            where: { unifiedReservation: { id: unifiedReservationId } },
+        });
+        return { participants, guests };
+    }
+
+    /**
+    * Añade un participante (usuario) a una reserva unificada
+    */
+    async addParticipant(unifiedReservationId: string, userId: string, type: ParticipantType = ParticipantType.PRINCIPAL) {
+
+        // 1 - Buscar la reserva unificada
+        const unifiedReservation = await this.unifiedReservationRepo.findOne({ where: { id: unifiedReservationId } });
+        if (!unifiedReservation) throw new Error('Reserva unificada no encontrada');
+
+        // 2 - Buscar el usuario
+        const user = await this.userRepo.findOne({ where: { id: userId } });
+        if (!user) throw new Error('Usuario no encontrado');
+
+        // Si ya existe como participante, no añadir de nuevo
+        const existingParticipant = await this.unifiedReservationRepo.manager.getRepository(Participant).findOne({
+            where: { unifiedReservation: { id: unifiedReservationId }, user: { id: userId } },
+        });
+        if (existingParticipant) {
+            return existingParticipant;
+        }
+
+        // Si se quiere añadir como participante PRINCIPAL, comprobar que no excede el límite de plazas
+        if (type === ParticipantType.PRINCIPAL) {
+            const disponibility = await this.calculateFullDisponibility(unifiedReservationId);
+            if (disponibility.availableSlots <= 0) {
+                throw new BadRequestException('No hay plazas disponibles para añadir más participantes principales');
+            }
+        }
+
+        // 3 - Crear el participante
+        const participant = new Participant();
+        participant.unifiedReservation = unifiedReservation;
+        participant.user = user;
+        participant.type = type;
+        return await this.unifiedReservationRepo.manager.getRepository(Participant).save(participant);
+    }
+
+    /**
+     * Añade un invitado a una reserva unificada
+     */
+    async addGuest(unifiedReservationId: string, dto: CreateGuestDto) {
+        // 1 - Buscar la reserva unificada
+        const unifiedReservation = await this.unifiedReservationRepo.findOne({ where: { id: unifiedReservationId } });
+        if (!unifiedReservation) throw new Error('Reserva unificada no encontrada');
+
+        // Si se quiere añadir como invitado PRINCIPAL, comprobar que no excede el límite de plazas
+        if ((dto.type ?? GuestType.PRINCIPAL) === GuestType.PRINCIPAL) {
+            const disponibility = await this.calculateFullDisponibility(unifiedReservationId);
+            if (disponibility.availableSlots <= 0) {
+                throw new BadRequestException('No hay plazas disponibles para añadir más invitados principales');
+            }
+        }
+
+        // 2 - Crear el invitado (con usuario creador obligatorio)
+        if (!dto.createdBy) throw new Error('Debe especificar el usuario creador');
+        const createdByUser = await this.userRepo.findOne({ where: { id: dto.createdBy } });
+        if (!createdByUser) throw new Error('Usuario creador no encontrado');
+
+        const guest = new Guest();
+        guest.unifiedReservation = unifiedReservation;
+        guest.name = dto.name;
+        guest.email = dto.email;
+        guest.type = dto.type ?? GuestType.PRINCIPAL;
+        guest.createdBy = createdByUser;
+        return await this.unifiedReservationRepo.manager.getRepository(Guest).save(guest);
+    }
+
+    /**
+     * Elimina un participante de una reserva unificada.
+     * Si el participante es de tipo PRINCIPAL, se libera una plaza.
+     */
+    async removeParticipant(unifiedReservationId: string, userId: string): Promise<boolean> {
+        // 1 - Buscar la reserva unificada
+        const unifiedReservation = await this.unifiedReservationRepo.findOne({ where: { id: unifiedReservationId } });
+        if (!unifiedReservation) throw new Error('Reserva unificada no encontrada');
+
+        // 2 - Buscar el participante
+        const participant = await this.unifiedReservationRepo.manager.getRepository(Participant).findOne({
+            where: { unifiedReservation: { id: unifiedReservationId }, user: { id: userId } },
+        });
+        if (!participant) throw new Error('Participante no encontrado');
+
+        // 3 - Si es de tipo PRINCIPAL, liberar una plaza
+        if (participant.type === ParticipantType.PRINCIPAL) {
+            const disponibility = await this.calculateFullDisponibility(unifiedReservationId);
+            if (disponibility.availableSlots < 0) {
+                throw new BadRequestException('No se puede eliminar el participante principal');
+            }
+        }
+
+        // 4 - Eliminar el participante
+        await this.unifiedReservationRepo.manager.getRepository(Participant).remove(participant);
+
+        return true;
+    }
+
+    /**
+     * Elimina un invitado de una reserva unificada.
+     */
+    async removeGuest(unifiedReservationId: string, guestId: string): Promise<boolean> {
+        // 1 - Buscar la reserva unificada
+        const unifiedReservation = await this.unifiedReservationRepo.findOne({ where: { id: unifiedReservationId } });
+        if (!unifiedReservation) throw new Error('Reserva unificada no encontrada');
+
+        // 2 - Buscar el invitado
+        const guest = await this.unifiedReservationRepo.manager.getRepository(Guest).findOne({
+            where: { unifiedReservation: { id: unifiedReservationId }, id: guestId },
+        });
+        if (!guest) throw new Error('Invitado no encontrado');
+
+        // 3 - Eliminar el invitado
+        await this.unifiedReservationRepo.manager.getRepository(Guest).remove(guest);
+
+        return true;
+    }
+
+    /**
+     * Disponibilidad total de plazas de una reserva unificada
+     */
+    async calculateTotalSlots(unifiedReservationId: string): Promise<number> {
+        // 0 - Obtener la reserva unificada
+        const unifiedReservation = await this.unifiedReservationRepo.findOne({ where: { id: unifiedReservationId } });
+        if (!unifiedReservation) {
+            throw new BadRequestException('Reserva unificada no encontrada');
+        }
+        // 1 - Obtener todas las reservas individuales asociadas a la reserva unificada
+        const reservations = await this.reservationRepo.find({ where: { unifiedReservation: { id: unifiedReservationId } } });
+
+        // 2 - Sumar el número de plazas de cada reserva individual
+        const totalSlots = reservations.reduce((sum, reservation) => sum + reservation.slots, 0);
+        return totalSlots;
+    }
+
+    async calculateFullDisponibility(unifiedReservationId: string): Promise<DisponibilityDto> {
+        // 0 - Obtener la reserva unificada
+        const unifiedReservation = await this.unifiedReservationRepo.findOne({ where: { id: unifiedReservationId } });
+        if (!unifiedReservation) {
+            throw new BadRequestException('Reserva unificada no encontrada');
+        }
+        // 1 - Obtener el numero total de plazas del evento
+        const totalSlots = await this.calculateTotalSlots(unifiedReservationId);
+
+        // 2 - Calcular las plazas ocupadas y disponibles mirando participantes e invitados de la reserva unificada
+        // 2.1 - Contar participantes con ParticipantType PRINCIPAL
+        const participantsCount = await this.unifiedReservationRepo.manager.getRepository(Participant).count({
+            where: { unifiedReservation: { id: unifiedReservationId }, type: ParticipantType.PRINCIPAL },
+        });
+
+        // 2.2 - Contar invitados con GuestType PRINCIPAL
+        const guestsCount = await this.unifiedReservationRepo.manager.getRepository(Guest).count({
+            where: { unifiedReservation: { id: unifiedReservationId }, type: GuestType.PRINCIPAL },
+        });
+
+        // 2.3 - Contar sustitutos (invitados de tipo SUBSTITUTE y participantes de tipo SUBSTITUTE)
+        const substitutesCount = await this.unifiedReservationRepo.manager.getRepository(Guest).count({
+            where: { unifiedReservation: { id: unifiedReservationId }, type: GuestType.SUBSTITUTE },
+        });
+        const participantsSubstitutesCount = await this.unifiedReservationRepo.manager.getRepository(Participant).count({
+            where: { unifiedReservation: { id: unifiedReservationId }, type: ParticipantType.SUBSTITUTE },
+        });
+
+        // 3 - Calcular plazas disponibles
+        const occupiedSlots = participantsCount + guestsCount;
+        const availableSlots = totalSlots - occupiedSlots;
+        const totalSubstitutes = substitutesCount + participantsSubstitutesCount;
+
+        return { totalSlots, availableSlots, currentOccupancy: occupiedSlots, substitutes: totalSubstitutes };
     }
 }

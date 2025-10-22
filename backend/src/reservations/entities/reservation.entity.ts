@@ -24,8 +24,8 @@ export class Reservation {
   @Column()
   date: Date;
 
-  @Column()
-  resourceId: string; // ID de la pista/espacio reservado
+  // @Column()
+  // resourceId: string; // ID de la pista/espacio reservado
 
   @ManyToOne(() => User, { nullable: false })
   createdBy: User;
