@@ -5,12 +5,18 @@ import '../../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../../features/auth/domain/usecases/login.dart';
 import '../../../features/auth/domain/usecases/logout.dart';
 import '../../../features/auth/presentation/bloc/auth_bloc.dart';
+import 'dart:io';
 
 final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
+  // Detectar plataforma y asignar la URL base adecuada
+  String baseUrl = 'http://localhost:3000';
+  if (Platform.isAndroid) {
+    baseUrl = 'http://10.0.2.2:3000';
+  }
   // Core
-  getIt.registerLazySingleton<ApiClient>(() => ApiClient(baseUrl: 'http://localhost:3000'));
+  getIt.registerLazySingleton<ApiClient>(() => ApiClient(baseUrl: baseUrl));
 
   // Data sources
   getIt.registerLazySingleton<AuthRemoteDataSource>(
