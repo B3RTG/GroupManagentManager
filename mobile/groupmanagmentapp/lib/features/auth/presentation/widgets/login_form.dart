@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../bloc/auth_bloc.dart';
 
 class LoginForm extends StatefulWidget {
@@ -11,16 +12,41 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  String _email = '';
-  String _password = '';
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _rememberMe = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   void _onLoginPressed() {
     if (_formKey.currentState?.validate() ?? false) {
-      _formKey.currentState?.save();
       context.read<AuthBloc>().add(
-        AuthLoginRequested(email: _email, password: _password),
+        AuthLoginRequested(
+          email: _emailController.text,
+          password: _passwordController.text,
+        ),
       );
+      // Aquí puedes usar _rememberMe para lógica futura
     }
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || !value.contains('@')) {
+      return 'Please enter a valid email address.';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.length < 6) {
+      return 'Password must be at least 6 characters.';
+    }
+    return null;
   }
 
   @override
@@ -36,7 +62,6 @@ class _LoginFormState extends State<LoginForm> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Bienvenido, \\${state.userName}!')),
           );
-          // Navegar a HomePage y reemplazar la ruta actual
           Future.microtask(() {
             Navigator.of(context).pushReplacementNamed('/home');
           });
@@ -45,28 +70,105 @@ class _LoginFormState extends State<LoginForm> {
       builder: (context, state) {
         return Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Email
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Email'),
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email address',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
                 keyboardType: TextInputType.emailAddress,
-                validator: (value) => value != null && value.contains('@') ? null : 'Introduce un email válido',
-                onSaved: (value) => _email = value ?? '',
+                validator: _validateEmail,
               ),
+              const SizedBox(height: 32),
+              // Password
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Contraseña'),
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
                 obscureText: true,
-                validator: (value) => value != null && value.length >= 6 ? null : 'Mínimo 6 caracteres',
-                onSaved: (value) => _password = value ?? '',
+                validator: _validatePassword,
+              ),
+              const SizedBox(height: 24),
+              // Remember me y Forgot password
+              Row(
+                children: [
+                  Checkbox(
+                    value: _rememberMe,
+                    onChanged: (value) {
+                      setState(() {
+                        _rememberMe = value ?? false;
+                      });
+                    },
+                  ),
+                  const Text('Remember for 30 days'),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text('Forgot password', style: TextStyle(fontSize: 14)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Botón principal
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: state is AuthLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF00C853), // Verde intenso
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: _onLoginPressed,
+                        child: const Text('Sign in'),
+                      ),
               ),
               const SizedBox(height: 16),
-              state is AuthLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: _onLoginPressed,
-                      child: const Text('Iniciar sesión'),
+              // Botón Google
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  icon: const FaIcon(FontAwesomeIcons.google, color: Colors.red, size: 22),
+                  label: const Text('Sign in with Google'),
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Sign up
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Don't have an account? ", style: TextStyle(fontSize: 14)),
+                  GestureDetector(
+                    onTap: () {},
+                    child: const Text('Sign up', style: TextStyle(fontSize: 14, color: Color(0xFF00C853), fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
             ],
           ),
         );

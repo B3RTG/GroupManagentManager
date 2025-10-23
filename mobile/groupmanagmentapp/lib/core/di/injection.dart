@@ -13,7 +13,8 @@ Future<void> configureDependencies() async {
   // Detectar plataforma y asignar la URL base adecuada
   String baseUrl = 'http://localhost:3000';
   if (Platform.isAndroid) {
-    baseUrl = 'http://10.0.2.2:3000';
+    baseUrl = 'http://192.168.1.54:3000'; // IP de la máquina host
+    //baseUrl = 'http://10.0.2.2:3000'; Para emulador Android
   }
   // Core
   getIt.registerLazySingleton<ApiClient>(() => ApiClient(baseUrl: baseUrl));
