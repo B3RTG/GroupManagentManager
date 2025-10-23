@@ -85,6 +85,15 @@ export class AuthController {
     return { user: socialUser, token };
   }
 
+  @Post('google/mobile')
+  @ApiOperation({ summary: 'Login móvil con Google (idToken)' })
+  @ApiBody({ schema: { properties: { idToken: { type: 'string', example: 'GOOGLE_ID_TOKEN' } } } })
+  @ApiResponse({ status: 200, description: 'Usuario autenticado vía Google y token JWT.' })
+  async googleMobileLogin(@Body('idToken') idToken: string) {
+    // Lógica a implementar: validar idToken con Google, buscar/crear usuario, devolver JWT
+    return this.authService.googleMobileLogin(idToken);
+  }
+
   @Post('register')
   @ApiOperation({ summary: 'Registro de usuario local' })
   @ApiBody({ type: RegisterDto })

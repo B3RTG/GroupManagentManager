@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import axios from 'axios';
 
 import { RegisterDto } from './dto/register.dto';
 import { plainToInstance } from 'class-transformer';
@@ -110,5 +111,32 @@ export class AuthService {
     });
     const userResponse = plainToInstance(AuthUserResponseDto, user, { excludeExtraneousValues: true });
     return { user: userResponse, token };
+  }
+
+  async googleMobileLogin(idToken: string): Promise<{ user: AuthUserResponseDto; token: string }> {
+    // 1. Validar el idToken con Google
+    let data: any;
+    try {
+      const response = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+      data = response.data;
+    } catch (err) {
+      throw new UnauthorizedException('Token de Google inválido (no se pudo verificar con Google)');
+    }
+    if (!data || !data.email) {
+      throw new UnauthorizedException('Token de Google inválido (sin email)');
+    }
+    // Validar el aud con el clientId de Google
+    const expectedAud = process.env.GOOGLE_CLIENT_ID;
+    if (!expectedAud || data.aud !== expectedAud) {
+      throw new UnauthorizedException('El token de Google no es para este proyecto (aud no coincide)');
+    }
+    // 2. Buscar o crear usuario
+    const socialUser = {
+      email: data.email,
+      name: data.name || '',
+      provider: 'google' as const,
+      googleId: data.sub,
+    };
+    return this.validateOrCreateSocialUser(socialUser);
   }
 }
