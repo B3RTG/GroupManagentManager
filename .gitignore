@@ -1,5 +1,12 @@
 # compiled output
+/node_modules/
 /dist
+apps/*/dist/
+apps/*/build/
+apps/*/node_modules/
+packages/*/dist/
+packages/*/build/
+packages/*/node_modules/
 
 # Ignorar solo la salida y dependencias de backend (NestJS)
 backend/dist/
@@ -31,6 +38,8 @@ backend/lerna-debug.log*
 # Tests
 backend/coverage/
 backend/.nyc_output/
+apps/web/coverage/
+packages/shared/coverage/
 /coverage
 /.nyc_output
 
@@ -74,6 +83,8 @@ backend/.env.development.local
 backend/.env.test.local
 backend/.env.production.local
 backend/.env.local
+apps/*/.env
+packages/*/.env
 .env
 .env.development.local
 .env.test.local
@@ -81,6 +92,10 @@ backend/.env.local
 # temp directory
 backend/.temp
 backend/.tmp
+apps/*/.temp
+apps/*/.tmp
+packages/*/.temp
+packages/*/.tmp
 .env.production.local
 .env.local
 
@@ -92,11 +107,26 @@ backend/pids
 backend/*.pid
 backend/*.seed
 backend/*.pid.lock
+apps/*/pids
+apps/*/*.pid
+apps/*/*.seed
+apps/*/*.pid.lock
+packages/*/pids
+packages/*/*.pid
+packages/*/*.seed
+packages/*/*.pid.lock
 .tmp
 
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 backend/report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+apps/*/report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+packages/*/report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+# Flutter/Android/iOS
+apps/mobile/**/build/
+apps/mobile/**/.dart_tool/
+apps/mobile/**/.packages
+apps/mobile/**/pubspec.lock
 # Runtime data
 pids
 *.pid
