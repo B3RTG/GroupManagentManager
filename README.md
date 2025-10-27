@@ -1,43 +1,74 @@
-## Licencia
-Este proyecto está licenciado bajo los términos de la licencia MIT. Consulta el archivo LICENSE para más detalles.
+# Idioma | Language
+--- | ---
+[Español](./README.md) | [English](./README.en.md)
 
-# Sistema de Gestión de Grupos y Reservas Deportivas
+# Group Management Manager Monorepo
 
 Este proyecto permite gestionar grupos deportivos, reservas de pistas/espacios y la inscripción de participantes, facilitando la organización y comunicación para distintos deportes y formatos.
 
-## Estructura del Proyecto
+## Estructura del Monorepo
 
 ```
 root/
-	backend/        # Código fuente y tests del backend (API, lógica de negocio, modelos)
-	web/            # Código fuente y tests de la app web (SPA)
-	mobile/         # Código fuente y tests de la app móvil (PWA o nativo)
-	docs/           # Documentación técnica y funcional
-	scripts/        # Scripts de despliegue, migraciones, utilidades
-	.github/        # Workflows de CI/CD
-	README.md       # Descripción general del proyecto
+	apps/
+		backend/         # API y lógica de negocio (NestJS)
+		web/             # Aplicación web (Vite/React)
+		mobile/
+			groupmanagmentapp/ # App móvil (Flutter)
+	packages/
+		shared/          # Código compartido entre módulos
+	docs/              # Documentación técnica y funcional
+	README.md          # Descripción general del proyecto
+	.gitignore         # Configuración de archivos ignorados
+	pnpm-workspace.yaml# Configuración de workspaces
 ```
 
-## Descripción de Carpetas
-- **backend/**: Implementación de la API, lógica de negocio, modelos y tests del servidor.
-- **web/**: Aplicación web para usuarios y administradores, desarrollada como SPA.
-- **mobile/**: Aplicación móvil (PWA o nativa) para acceso desde dispositivos móviles.
-- **docs/**: Documentación funcional y técnica, especificaciones, diagramas y manuales.
-- **scripts/**: Scripts para despliegue, migraciones de base de datos y utilidades.
-- **.github/**: Configuración de workflows para integración y despliegue continuo (CI/CD).
+## Comandos principales
 
-## Recomendaciones Iniciales
-- Mantener cada carpeta bien documentada y estructurada.
-- Usar control de versiones (Git) y ramas para desarrollo y producción.
-- Integrar CI/CD para pruebas y despliegue automatizado.
-- Compartir modelos y utilidades comunes en una carpeta `shared/` si es necesario.
-- Documentar dependencias y procesos en `docs/` y en este `README.md`.
+Desde la raíz del monorepo, usando pnpm:
 
-## Documentación
-Consulta la carpeta `docs/` para información técnica, funcional y diagramas detallados del sistema.
+- Instalar dependencias:
+	```bash
+	pnpm install
+	```
+- Iniciar backend:
+	```bash
+	pnpm dev:backend
+	```
+- Iniciar web:
+	```bash
+	pnpm dev:web
+	```
+- Iniciar app móvil (Flutter):
+	```bash
+	pnpm dev:mobile
+	# O manualmente:
+	cd apps/mobile/groupmanagmentapp && flutter run
+	```
+- Lint y formato en todos los workspaces:
+	```bash
+	pnpm lint
+	pnpm format
+	```
+
+## Buenas prácticas
+
+- Mantén cada workspace bien documentado y estructurado.
+- Usa ramas por feature y PRs para cambios.
+- Los archivos `.env` y variables sensibles están protegidos por `.gitignore`.
+- El archivo `.env.example` sirve de plantilla para configuración local.
+- Consulta la carpeta `docs/` para información técnica y diagramas.
+
 
 ## Colaboración
-Para contribuir, sigue las buenas prácticas de desarrollo, revisa la documentación y utiliza las ramas de desarrollo para tus cambios.
+
+Para contribuir:
+- Sigue las buenas prácticas de desarrollo.
+- Revisa la documentación y utiliza ramas de desarrollo para tus cambios.
+- Haz commits descriptivos y revisa los cambios antes de subirlos.
+
+## Licencia
+Este proyecto está licenciado bajo los términos de la licencia MIT. Consulta el archivo LICENSE para más detalles.
 
 # Group Management Manager
 
@@ -61,4 +92,8 @@ Este monorepo contiene la gestión de grupos y reservas para deportes como páde
 
 ## Contacto
 
-Para dudas o sugerencias, contacta al responsable del repositorio.
+Para dudas, sugerencias o soporte, puedes contactar al responsable del repositorio:
+
+- **Autor:** Albert (B3RTG)
+- **Email:** [albert.kais@gmail.com]
+- O abre un issue en GitHub.
