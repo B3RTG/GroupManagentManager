@@ -11,6 +11,14 @@ async function bootstrap() {
     //skipMissingProperties: true,
   }));
 
+  // --- CORS config solo en desarrollo o no-producción ---
+  if (process.env.NODE_ENV !== 'production') {
+    app.enableCors({
+      origin: ['http://localhost:33847'], // Puertos para Flutter web y desarrollo
+      credentials: true, // si usas cookies o autenticación
+    });
+  }
+
   // --- Swagger config solo en desarrollo o no-producción ---
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
