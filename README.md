@@ -1,6 +1,9 @@
-# Idioma | Language
---- | ---
-[Español](./README.md) | [English](./README.en.md)
+
+## Índice de idiomas / Language Index
+
+| Español | English |
+|---------|---------|
+| [README.md](./README.md) | [README.en.md](./README.en.md) |
 
 # Group Management Manager Monorepo
 

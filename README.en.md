@@ -1,6 +1,9 @@
-# Language | Idioma
---- | ---
-[English](./README.en.md) | [Español](./README.md)
+
+## Language Index / Índice de idiomas
+
+| English | Español |
+|---------|---------|
+| [README.en.md](./README.en.md) | [README.md](./README.md) |
 # Group Management Manager Monorepo
 
 This project allows you to manage sports groups, court/space reservations, and participant registration, making organization and communication easier for various sports and formats.
