@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:groupmanagmentapp/features/auth/domain/usecases/login_google.dart';
 import '../network/api_client.dart';
 import '../../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../../features/auth/data/repositories/auth_repository_impl.dart';
@@ -13,7 +14,7 @@ Future<void> configureDependencies() async {
   // Detectar plataforma y asignar la URL base adecuada
   String baseUrl = 'http://localhost:3000';
   if (Platform.isAndroid) {
-    baseUrl = 'http://192.168.1.54:3000'; // IP de la máquina host
+    baseUrl = 'http://192.168.1.50:3000'; // IP de la máquina host
     //baseUrl = 'http://10.0.2.2:3000'; Para emulador Android
   }
   // Core
@@ -30,11 +31,12 @@ Future<void> configureDependencies() async {
   );
 
   // Use cases
-  getIt.registerLazySingleton<Login>(
-    () => Login(getIt<AuthRepositoryImpl>()),
-  );
+  getIt.registerLazySingleton<Login>(() => Login(getIt<AuthRepositoryImpl>()));
   getIt.registerLazySingleton<Logout>(
     () => Logout(getIt<AuthRepositoryImpl>()),
+  );
+  getIt.registerLazySingleton<LoginWithGoogle>(
+    () => LoginWithGoogle(getIt<AuthRepositoryImpl>()),
   );
 
   // Bloc
@@ -42,6 +44,7 @@ Future<void> configureDependencies() async {
     () => AuthBloc(
       loginUseCase: getIt<Login>(),
       logoutUseCase: getIt<Logout>(),
+      loginWithGoogleUseCase: getIt<LoginWithGoogle>(),
     ),
   );
 }

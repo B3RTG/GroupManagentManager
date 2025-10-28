@@ -1,5 +1,5 @@
 name: groupmanagmentapp
-description: "A new Flutter project."
+description: "App to manage groups and events"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -38,6 +38,7 @@ dependencies:
   flutter_bloc: ^9.1.1
   get_it: ^8.2.0
   font_awesome_flutter: ^10.12.0
+  google_sign_in: ^7.2.0
 
 dev_dependencies:
   flutter_test:

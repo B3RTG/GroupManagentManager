@@ -9,3 +9,8 @@ class AuthLoginRequested extends AuthEvent {
 }
 
 class AuthLogoutRequested extends AuthEvent {}
+
+class AuthGoogleLoginRequested extends AuthEvent {
+  final String idToken;
+  AuthGoogleLoginRequested({required this.idToken});
+}
