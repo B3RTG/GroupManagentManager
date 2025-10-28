@@ -35,7 +35,10 @@ class UserModel {
       avatarUrl: json['avatarUrl'] as String?,
       phoneNumber: json['phoneNumber'] as String?,
       isActive: json['isActive'] as bool,
-      lastLogin: DateTime.parse(json['lastLogin'] as String),
+      lastLogin:
+          json['lastLogin'] != null && (json['lastLogin'] as String).isNotEmpty
+          ? DateTime.parse(json['lastLogin'] as String)
+          : DateTime.fromMillisecondsSinceEpoch(0), // o null si lo prefieres
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
