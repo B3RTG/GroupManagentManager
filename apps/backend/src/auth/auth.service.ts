@@ -113,7 +113,7 @@ export class AuthService {
     return { user: userResponse, token };
   }
 
-  async googleMobileLogin(idToken: string): Promise<{ user: AuthUserResponseDto; token: string }> {
+  async validateGoogleToken(idToken: string): Promise<{ email: string; name: string; googleId: string }> {
     // 1. Validar el idToken con Google
     let data: any;
     try {
@@ -130,13 +130,48 @@ export class AuthService {
     if (!expectedAud || data.aud !== expectedAud) {
       throw new UnauthorizedException('El token de Google no es para este proyecto (aud no coincide)');
     }
+    return {
+      email: data.email,
+      name: data.name || '',
+      googleId: data.sub,
+    };
+  }
+
+  async loginGoogleUser(idToken: string): Promise<{ user: AuthUserResponseDto; token: string }> {
+    // 1. Validar el idToken con Google
+    const data = await this.validateGoogleToken(idToken);
+
+    // 2. Buscar el usuario
+    const user = await this.userRepository.findOne({
+      where: { email: data.email },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Usuario no registrado');
+    }
+
+    const token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
+    const userResponse = plainToInstance(AuthUserResponseDto, user, { excludeExtraneousValues: true });
+    return { user: userResponse, token };
+  }
+
+  async signUpGoogleUser(idToken: string): Promise<{ user: AuthUserResponseDto; token: string }> {
+    // 1. Validar el idToken con Google
+    const data = await this.validateGoogleToken(idToken);
+
     // 2. Buscar o crear usuario
     const socialUser = {
       email: data.email,
       name: data.name || '',
       provider: 'google' as const,
-      googleId: data.sub,
+      googleId: data.googleId,
     };
+
     return this.validateOrCreateSocialUser(socialUser);
   }
+
+
 }
