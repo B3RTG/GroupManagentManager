@@ -1,20 +1,10 @@
-export interface SocialUser {
-  email: string;
-  name: string;
-  provider: 'google' | 'facebook';
-  googleId?: string;
-  facebookId?: string;
-}
-
 import { Controller, Get, Req, UseGuards, Body, Post } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { ApiTags, ApiBearerAuth, ApiBody, ApiResponse, ApiOperation } from '@nestjs/swagger';
-
-// ...existing code...
-
 import { ApiProperty } from '@nestjs/swagger';
+import { SocialUser } from './interfaces/social-user.interface';
 
 export class LoginDto {
   @ApiProperty({ example: 'user@email.com' })
@@ -85,13 +75,21 @@ export class AuthController {
     return { user: socialUser, token };
   }
 
-  @Post('google/mobile')
-  @ApiOperation({ summary: 'Login móvil con Google (idToken)' })
+  @Post('google/signup')
+  @ApiOperation({ summary: 'Registro de usuario con Google (idToken)' })
+  @ApiBody({ schema: { properties: { idToken: { type: 'string', example: 'GOOGLE_ID_TOKEN' } } } })
+  @ApiResponse({ status: 200, description: 'Usuario registrado vía Google y token JWT.' })
+  async googleSignUp(@Body('idToken') idToken: string) {
+    // Lógica a implementar: validar idToken con Google, buscar/crear usuario, devolver JWT
+    return this.authService.signUpGoogleUser(idToken);
+  }
+
+  @Post('google/login')
+  @ApiOperation({ summary: 'Login con Google (idToken)' })
   @ApiBody({ schema: { properties: { idToken: { type: 'string', example: 'GOOGLE_ID_TOKEN' } } } })
   @ApiResponse({ status: 200, description: 'Usuario autenticado vía Google y token JWT.' })
-  async googleMobileLogin(@Body('idToken') idToken: string) {
-    // Lógica a implementar: validar idToken con Google, buscar/crear usuario, devolver JWT
-    return this.authService.googleMobileLogin(idToken);
+  async googleLogin(@Body('idToken') idToken: string) {
+    return this.authService.loginGoogleUser(idToken);
   }
 
   @Post('register')
