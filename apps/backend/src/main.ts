@@ -33,6 +33,12 @@ async function bootstrap() {
   }
   // --- Fin Swagger config ---
 
+  // log para ver las variables de entorno cargadas (solo en desarrollo)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Environment Variables:');
+    console.log(`DATABASE_URL: ${process.env.DATABASE_URL}`);
+  }
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap().catch((err) => {

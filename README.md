@@ -54,6 +54,48 @@ Desde la raíz del monorepo, usando pnpm:
 	pnpm format
 	```
 
+## Uso de Docker para base de datos y administración
+
+Este proyecto incluye un archivo `docker-compose.yml` para levantar fácilmente una base de datos PostgreSQL y una interfaz de administración pgAdmin.
+
+### Levantar la base de datos y pgAdmin
+
+Desde la raíz del proyecto, ejecuta:
+
+```bash
+docker compose up -d
+```
+
+Esto iniciará:
+- **PostgreSQL** en el puerto `5432`
+- **pgAdmin** en el puerto `5050`
+
+### Acceso a pgAdmin
+
+1. Abre tu navegador y ve a [http://localhost:5050](http://localhost:5050)
+2. Credenciales por defecto:
+   - **Email:** `admin@admin.com`
+   - **Contraseña:** `admin`
+3. Añade un nuevo servidor con estos datos:
+   - **Host:** `postgres`
+   - **Puerto:** `5432`
+   - **Usuario:** `postgres`
+   - **Contraseña:** `postgres`
+   - **Base de datos:** `gmm_database`
+
+### Parar los servicios
+
+Para detener los contenedores:
+
+```bash
+docker-compose down
+```
+
+> Los datos de la base de datos se mantienen en la carpeta `./postgres-data` del proyecto.
+
+---
+
+
 ## Buenas prácticas
 
 - Mantén cada workspace bien documentado y estructurado.
