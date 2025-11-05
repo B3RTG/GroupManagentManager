@@ -57,7 +57,7 @@ export class AuthService {
     const user = await this.userRepository.findOne({
       where: { email: data.email },
     });
-    if (!user) throw new Error('Usuario no encontrado');
+    if (!user) throw new UnauthorizedException('Usuario no encontrado');
 
     const valid = await bcrypt.compare(data.password, user.password);
     if (!valid)

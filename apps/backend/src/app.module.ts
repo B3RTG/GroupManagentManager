@@ -25,7 +25,10 @@ import { Match, Player } from './matches/entities';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      envFilePath: ['.env.development.local', '.env'],
+      isGlobal: true
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
