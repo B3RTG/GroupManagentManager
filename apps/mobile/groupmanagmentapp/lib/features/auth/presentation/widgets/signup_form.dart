@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:groupmanagmentapp/core/services/google_sign_in_service.dart';
+import 'package:groupmanagmentapp/core/di/injection.dart';
 import '../../presentation/bloc/auth_bloc.dart';
 
 class SignupForm extends StatefulWidget {
@@ -18,9 +20,36 @@ class _SignupFormState extends State<SignupForm> {
   final TextEditingController _confirmPasswordController = TextEditingController();
 
   bool _isSubmitting = false;
+  final GoogleSignInService _googleSignInService = getIt<GoogleSignInService>();
+
+  @override
+  void initState() {
+    super.initState();
+    _googleSignInService.initialize(
+      clientId: "553605727695-umjvt7jr44jh2c6rhmd12nierrbjob0u.apps.googleusercontent.com",
+      serverClientId: "553605727695-7e4mn6tglmj85r4h4jnmiea0bs949hnp.apps.googleusercontent.com",
+      onSignIn: (event) {
+        if (!mounted) return;
+        final user = event.user;
+        final idToken = user.authentication.idToken;
+        if (idToken != null && idToken.isNotEmpty) {
+          context.read<AuthBloc>().add(
+            AuthGoogleRegisterRequested(idToken: idToken),
+          );
+        }
+      },
+      onError: (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error en Google Sign-Up: $error')),
+        );
+      },
+    );
+  }
 
   @override
   void dispose() {
+    _googleSignInService.dispose();
     _emailController.dispose();
     _nameController.dispose();
     _passwordController.dispose();
@@ -41,10 +70,13 @@ class _SignupFormState extends State<SignupForm> {
   }
 
   Future<void> _onGoogleSignupPressed() async {
-    // TODO: Implementar lógica de registro con Google
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Registro con Google (falta lógica)')),
-    );
+    try {
+      await _googleSignInService.authenticate();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Google Sign-Up failed: \\${e.toString()}')),
+      );
+    }
   }
 
   String? _validateEmail(String? value) {

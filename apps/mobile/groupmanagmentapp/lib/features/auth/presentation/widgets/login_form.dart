@@ -4,6 +4,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:async';
 import '../bloc/auth_bloc.dart';
+import 'package:groupmanagmentapp/core/services/google_sign_in_service.dart';
+import 'package:groupmanagmentapp/core/di/injection.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -16,47 +18,38 @@ class _LoginFormState extends State<LoginForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  late final StreamSubscription _googleSignInSub;
   bool _rememberMe = false;
+
+  final GoogleSignInService _googleSignInService = getIt<GoogleSignInService>();
 
   @override
   void initState() {
     super.initState();
-    GoogleSignIn.instance
-        .initialize(
-          clientId:
-              "553605727695-umjvt7jr44jh2c6rhmd12nierrbjob0u.apps.googleusercontent.com",
-          serverClientId:
-              "553605727695-7e4mn6tglmj85r4h4jnmiea0bs949hnp.apps.googleusercontent.com",
-        )
-        .then((_) {
-          _googleSignInSub = GoogleSignIn.instance.authenticationEvents.listen(
-            (event) {
-              if (!mounted) return;
-              if (event is GoogleSignInAuthenticationEventSignIn) {
-                final user = event.user;
-                final GoogleSignInAuthentication auth = user.authentication;
-                final String? idToken = auth.idToken;
-                if (idToken != null && idToken.isNotEmpty) {
-                  context.read<AuthBloc>().add(
-                    AuthGoogleLoginRequested(idToken: idToken),
-                  );
-                }
-              }
-            },
-            onError: (error) {
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error en Google Sign-In: $error')),
-              );
-            },
+    _googleSignInService.initialize(
+      clientId: "553605727695-umjvt7jr44jh2c6rhmd12nierrbjob0u.apps.googleusercontent.com",
+      serverClientId: "553605727695-7e4mn6tglmj85r4h4jnmiea0bs949hnp.apps.googleusercontent.com",
+      onSignIn: (event) {
+        if (!mounted) return;
+        final user = event.user;
+        final idToken = user.authentication.idToken;
+        if (idToken != null && idToken.isNotEmpty) {
+          context.read<AuthBloc>().add(
+            AuthGoogleLoginRequested(idToken: idToken),
           );
-        });
+        }
+      },
+      onError: (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error en Google Sign-In: $error')),
+        );
+      },
+    );
   }
 
   @override
   void dispose() {
-    _googleSignInSub.cancel();
+    _googleSignInService.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -76,10 +69,10 @@ class _LoginFormState extends State<LoginForm> {
 
   Future<void> _onGoogleSignInPressed() async {
     try {
-      await GoogleSignIn.instance.authenticate();
+      await _googleSignInService.authenticate();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google Sign-In failed: ${e.toString()}')),
+        SnackBar(content: Text('Google Sign-In failed: \\${e.toString()}')),
       );
     }
   }

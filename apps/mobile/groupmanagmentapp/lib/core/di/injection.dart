@@ -4,6 +4,7 @@ import 'package:groupmanagmentapp/features/auth/domain/usecases/login_google.dar
 import 'package:groupmanagmentapp/features/auth/domain/usecases/register.dart';
 import 'package:groupmanagmentapp/features/auth/domain/usecases/register_google.dart';
 import '../network/api_client.dart';
+import '../services/google_sign_in_service.dart';
 import '../../../features/auth/data/datasources/auth_remote_data_source.dart';
 import '../../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../../features/auth/domain/usecases/login.dart';
@@ -58,4 +59,7 @@ Future<void> configureDependencies() async {
       registerUseCase: getIt<Register>(),
     ),
   );
+
+  // Servicios core
+  getIt.registerLazySingleton<GoogleSignInService>(() => GoogleSignInService());
 }
