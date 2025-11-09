@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:groupmanagmentapp/features/auth/domain/usecases/login.dart';
 import 'package:groupmanagmentapp/features/auth/domain/usecases/login_google.dart';
+import 'package:groupmanagmentapp/features/auth/domain/usecases/login_with_token.dart';
 import 'package:groupmanagmentapp/features/auth/domain/usecases/logout.dart';
 import 'package:groupmanagmentapp/features/auth/domain/usecases/register_google.dart';
 import 'package:groupmanagmentapp/features/auth/domain/usecases/register.dart';
@@ -14,6 +15,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginWithGoogle loginWithGoogleUseCase;
   final RegisterWithGoogle registerWithGoogleUseCase;
   final Register registerUseCase;
+  final LoginWithToken loginWithTokenUseCase;
 
   AuthBloc({
     required this.loginUseCase,
@@ -21,6 +23,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.loginWithGoogleUseCase,
     required this.registerWithGoogleUseCase,
     required this.registerUseCase,
+    required this.loginWithTokenUseCase,
   }) : super(AuthInitial()) {
     on<AuthLoginRequested>((event, emit) async {
       emit(AuthLoading());
@@ -29,7 +32,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           email: event.email,
           password: event.password,
         );
-        emit(AuthAuthenticated(user.name));
+        emit(AuthAuthenticated(user.name, user.token));
       } catch (e) {
         emit(AuthError(e.toString()));
       }
@@ -50,7 +53,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       try {
         // Aquí llama a tu repositorio/servicio para enviar el idToken al backend
         final user = await loginWithGoogleUseCase(idToken: event.idToken);
-        emit(AuthAuthenticated(user.name));
+        emit(AuthAuthenticated(user.name, user.token));
       } catch (e) {
         emit(AuthError('Error al iniciar sesión con Google'));
       }
@@ -61,7 +64,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       try {
         // Aquí llama a tu repositorio/servicio para registrar con el idToken al backend
         final user = await registerWithGoogleUseCase(idToken: event.idToken);
-        emit(AuthAuthenticated(user.name));
+        emit(AuthAuthenticated(user.name, user.token));
       } catch (e) {
         emit(AuthError('Error al registrar con Google'));
       }
@@ -75,9 +78,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           name: event.name,
           password: event.password,
         );
-        emit(AuthAuthenticated(user.name));
+        emit(AuthAuthenticated(user.name, user.token));
       } catch (e) {
         emit(AuthError('Error al registrar usuario'));
+      }
+    });
+
+    on<AuthTokenLoginRequested>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        final user = await loginWithTokenUseCase(token: event.token);
+        emit(AuthAuthenticated(user.username, user.token));
+      } catch (e) {
+        emit(AuthError('Error al autenticar con token'));
       }
     });
   }

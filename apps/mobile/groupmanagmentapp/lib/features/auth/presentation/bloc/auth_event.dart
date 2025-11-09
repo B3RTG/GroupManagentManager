@@ -26,3 +26,8 @@ class AuthSignupRequested extends AuthEvent {
   final String password;
   AuthSignupRequested({required this.email, required this.name, required this.password});
 }
+
+class AuthTokenLoginRequested extends AuthEvent {
+  final String token;
+  AuthTokenLoginRequested({required this.token});
+}

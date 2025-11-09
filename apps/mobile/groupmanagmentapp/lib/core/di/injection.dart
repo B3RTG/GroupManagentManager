@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
+import 'package:groupmanagmentapp/core/services/secure_storage_service.dart';
 import 'package:groupmanagmentapp/features/auth/domain/usecases/login_google.dart';
 import 'package:groupmanagmentapp/features/auth/domain/usecases/register.dart';
 import 'package:groupmanagmentapp/features/auth/domain/usecases/register_google.dart';
+import 'package:groupmanagmentapp/features/auth/domain/usecases/login_with_token.dart';
 import '../network/api_client.dart';
 import '../services/google_sign_in_service.dart';
 import '../../../features/auth/data/datasources/auth_remote_data_source.dart';
@@ -48,6 +50,9 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<RegisterWithGoogle>(
     () => RegisterWithGoogle(getIt<AuthRepositoryImpl>()),
   );
+  getIt.registerLazySingleton<LoginWithToken>(
+    () => LoginWithToken(getIt<AuthRepositoryImpl>()),
+  );
 
   // Bloc
   getIt.registerFactory<AuthBloc>(
@@ -57,9 +62,11 @@ Future<void> configureDependencies() async {
       loginWithGoogleUseCase: getIt<LoginWithGoogle>(),
       registerWithGoogleUseCase: getIt<RegisterWithGoogle>(),
       registerUseCase: getIt<Register>(),
+      loginWithTokenUseCase: getIt<LoginWithToken>(),
     ),
   );
 
   // Servicios core
   getIt.registerLazySingleton<GoogleSignInService>(() => GoogleSignInService());
+  getIt.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
 }

@@ -79,4 +79,24 @@ class AuthRemoteDataSource {
       throw Exception('Registration failed: ${e.message}');
     }
   }
+
+  Future<AuthResponseModel> loginWithToken(String token) async {
+    try {
+      final response = await apiClient.get(
+        '/auth/profile',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        )
+      );
+      //return AuthResponseModel.fromJson(response.data);
+      return AuthResponseModel(
+        user: UserModel.fromJson(response.data as Map<String, dynamic>),
+        token: token, // Usas el token que ya tienes
+      );
+    } on DioException catch (e) {
+      throw Exception('Token login failed: ${e.message}');
+    }
+  }
 }
