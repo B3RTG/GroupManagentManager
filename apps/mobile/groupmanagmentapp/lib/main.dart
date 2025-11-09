@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/pages/login_page.dart';
+import 'features/auth/presentation/pages/signup_page.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'core/di/injection.dart';
 import 'package:get_it/get_it.dart';
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
         home: const LoginPage(),
         routes: {
           '/home': (context) => const HomePage(),
+          '/signup': (context) => const SignupPage(),
         },
       ),
     );

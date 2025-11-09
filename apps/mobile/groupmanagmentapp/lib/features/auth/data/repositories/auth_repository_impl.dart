@@ -16,6 +16,7 @@ class AuthRepositoryImpl implements AuthRepository {
     );
     // Convertir UserModel a User (entidad de dominio)
     final userModel = authResponse.user;
+
     return User(
       id: userModel.id,
       name: userModel.name,
@@ -42,6 +43,53 @@ class AuthRepositoryImpl implements AuthRepository {
       idToken: idToken,
     );
     // Convertir UserModel a User (entidad de dominio)
+    final userModel = authResponse.user;
+    return User(
+      id: userModel.id,
+      name: userModel.name,
+      username: userModel.username,
+      email: userModel.email,
+      preferredSports: userModel.preferredSports,
+      avatarUrl: userModel.avatarUrl,
+      phoneNumber: userModel.phoneNumber,
+      isActive: userModel.isActive,
+      lastLogin: userModel.lastLogin,
+      createdAt: userModel.createdAt,
+      updatedAt: userModel.updatedAt,
+    );
+  }
+
+  @override
+  Future<User> registerWithGoogle({required String idToken}) async {
+    final authResponse = await remoteDataSource.registerWithGoogle(
+      idToken: idToken,
+    );
+    // Convertir UserModel a User (entidad de dominio)
+    final userModel = authResponse.user;
+    return User(
+      id: userModel.id,
+      name: userModel.name,
+      username: userModel.username,
+      email: userModel.email,
+      preferredSports: userModel.preferredSports,
+      avatarUrl: userModel.avatarUrl,
+      phoneNumber: userModel.phoneNumber,
+      isActive: userModel.isActive,
+      lastLogin: userModel.lastLogin,
+      createdAt: userModel.createdAt,
+      updatedAt: userModel.updatedAt,
+    );
+
+  }
+
+  @override
+  Future<User> register({required String email, required String name, required String password}) async {
+    final authResponse = await remoteDataSource.register(
+      email: email,
+      name: name,
+      username: name,
+      password: password,
+    );
     final userModel = authResponse.user;
     return User(
       id: userModel.id,

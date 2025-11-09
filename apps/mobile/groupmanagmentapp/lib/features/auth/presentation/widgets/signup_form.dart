@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'dart:async';
-import '../bloc/auth_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:groupmanagmentapp/core/services/google_sign_in_service.dart';
 import 'package:groupmanagmentapp/core/di/injection.dart';
+import '../../presentation/bloc/auth_bloc.dart';
 
-class LoginForm extends StatefulWidget {
-  const LoginForm({super.key});
+class SignupForm extends StatefulWidget {
+  const SignupForm({super.key});
 
   @override
-  State<LoginForm> createState() => _LoginFormState();
+  State<SignupForm> createState() => _SignupFormState();
 }
 
-class _LoginFormState extends State<LoginForm> {
+class _SignupFormState extends State<SignupForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _rememberMe = false;
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
+  bool _isSubmitting = false;
   final GoogleSignInService _googleSignInService = getIt<GoogleSignInService>();
 
   @override
@@ -34,14 +34,14 @@ class _LoginFormState extends State<LoginForm> {
         final idToken = user.authentication.idToken;
         if (idToken != null && idToken.isNotEmpty) {
           context.read<AuthBloc>().add(
-            AuthGoogleLoginRequested(idToken: idToken),
+            AuthGoogleRegisterRequested(idToken: idToken),
           );
         }
       },
       onError: (error) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error en Google Sign-In: $error')),
+          SnackBar(content: Text('Error en Google Sign-Up: $error')),
         );
       },
     );
@@ -51,28 +51,30 @@ class _LoginFormState extends State<LoginForm> {
   void dispose() {
     _googleSignInService.dispose();
     _emailController.dispose();
+    _nameController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _onLoginPressed() {
+  void _onSignupPressed() {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<AuthBloc>().add(
-        AuthLoginRequested(
+      BlocProvider.of<AuthBloc>(context).add(
+        AuthSignupRequested(
           email: _emailController.text,
+          name: _nameController.text,
           password: _passwordController.text,
         ),
       );
-      // Aquí puedes usar _rememberMe para lógica futura
     }
   }
 
-  Future<void> _onGoogleSignInPressed() async {
+  Future<void> _onGoogleSignupPressed() async {
     try {
       await _googleSignInService.authenticate();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google Sign-In failed: \\${e.toString()}')),
+        SnackBar(content: Text('Google Sign-Up failed: \\${e.toString()}')),
       );
     }
   }
@@ -84,9 +86,23 @@ class _LoginFormState extends State<LoginForm> {
     return null;
   }
 
+  String? _validateName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter your name.';
+    }
+    return null;
+  }
+
   String? _validatePassword(String? value) {
     if (value == null || value.length < 6) {
       return 'Password must be at least 6 characters.';
+    }
+    return null;
+  }
+
+  String? _validateConfirmPassword(String? value) {
+    if (value != _passwordController.text) {
+      return 'Passwords do not match.';
     }
     return null;
   }
@@ -96,17 +112,25 @@ class _LoginFormState extends State<LoginForm> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          setState(() => _isSubmitting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
         }
         if (state is AuthAuthenticated) {
+          setState(() => _isSubmitting = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Bienvenido, \\${state.userName}!')),
+            SnackBar(content: Text('Bienvenido, ${state.userName}!')),
           );
           Future.microtask(() {
             Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
           });
+        }
+        if (state is AuthLoading) {
+          setState(() => _isSubmitting = true);
+        }
+        if (state is AuthInitial) {
+          setState(() => _isSubmitting = false);
         }
       },
       builder: (context, state) {
@@ -117,7 +141,6 @@ class _LoginFormState extends State<LoginForm> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Email
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
@@ -133,8 +156,22 @@ class _LoginFormState extends State<LoginForm> {
                 keyboardType: TextInputType.emailAddress,
                 validator: _validateEmail,
               ),
-              const SizedBox(height: 32),
-              // Password
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+                validator: _validateName,
+              ),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _passwordController,
                 decoration: InputDecoration(
@@ -150,39 +187,31 @@ class _LoginFormState extends State<LoginForm> {
                 obscureText: true,
                 validator: _validatePassword,
               ),
-              const SizedBox(height: 24),
-              // Remember me y Forgot password
-              Row(
-                children: [
-                  Checkbox(
-                    value: _rememberMe,
-                    onChanged: (value) {
-                      setState(() {
-                        _rememberMe = value ?? false;
-                      });
-                    },
-                  ),
-                  const Text('Remember for 30 days'),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Forgot password',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 20),
-              // Botón principal
+              TextFormField(
+                controller: _confirmPasswordController,
+                decoration: InputDecoration(
+                  labelText: 'Confirm password',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+                obscureText: true,
+                validator: _validateConfirmPassword,
+              ),
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 height: 48,
-                child: state is AuthLoading
+                child: _isSubmitting
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF00C853), // Verde intenso
+                          backgroundColor: const Color(0xFF00C853),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -191,8 +220,8 @@ class _LoginFormState extends State<LoginForm> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        onPressed: _onLoginPressed,
-                        child: const Text('Sign in'),
+                        onPressed: _onSignupPressed,
+                        child: const Text('Sign up'),
                       ),
               ),
               const SizedBox(height: 16),
@@ -206,7 +235,6 @@ class _LoginFormState extends State<LoginForm> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Botón Google
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -216,8 +244,8 @@ class _LoginFormState extends State<LoginForm> {
                     color: Colors.red,
                     size: 22,
                   ),
-                  label: const Text('Sign in with Google'),
-                  onPressed: _onGoogleSignInPressed,
+                  label: const Text('Sign up with Google'),
+                  onPressed: _onGoogleSignupPressed,
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -226,20 +254,19 @@ class _LoginFormState extends State<LoginForm> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Sign up
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    "Don't have an account? ",
+                    'Already have an account? ',
                     style: TextStyle(fontSize: 14),
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.of(context).pushNamed('/signup');
+                      Navigator.of(context).pop();
                     },
                     child: const Text(
-                      'Sign up',
+                      'Sign in',
                       style: TextStyle(
                         fontSize: 14,
                         color: Color(0xFF00C853),

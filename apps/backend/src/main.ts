@@ -13,8 +13,10 @@ async function bootstrap() {
 
   // --- CORS config solo en desarrollo o no-producción ---
   if (process.env.NODE_ENV !== 'production') {
+    console.log('CORS enabled for development');
     app.enableCors({
-      origin: ['http://localhost:33847'], // Puertos para Flutter web y desarrollo
+      //origin: ['http://localhost:33847'], // Puertos para Flutter web y desarrollo
+      origin: true, // o origin: '*'
       credentials: true, // si usas cookies o autenticación
     });
   }
