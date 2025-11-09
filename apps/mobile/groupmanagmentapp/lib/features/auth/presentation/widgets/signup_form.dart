@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:groupmanagmentapp/core/services/google_sign_in_service.dart';
 import 'package:groupmanagmentapp/core/di/injection.dart';
+import 'package:groupmanagmentapp/core/services/secure_storage_service.dart';
 import '../../presentation/bloc/auth_bloc.dart';
 
 class SignupForm extends StatefulWidget {
@@ -20,6 +21,7 @@ class _SignupFormState extends State<SignupForm> {
   final TextEditingController _confirmPasswordController = TextEditingController();
 
   bool _isSubmitting = false;
+  bool _rememberMe = false;
   final GoogleSignInService _googleSignInService = getIt<GoogleSignInService>();
 
   @override
@@ -109,8 +111,9 @@ class _SignupFormState extends State<SignupForm> {
 
   @override
   Widget build(BuildContext context) {
+    final SecureStorageService _secureStorageService = getIt<SecureStorageService>();
     return BlocConsumer<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is AuthError) {
           setState(() => _isSubmitting = false);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -119,6 +122,9 @@ class _SignupFormState extends State<SignupForm> {
         }
         if (state is AuthAuthenticated) {
           setState(() => _isSubmitting = false);
+          if (_rememberMe) {
+            await _secureStorageService.saveToken(state.token);
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Bienvenido, ${state.userName}!')),
           );
@@ -204,6 +210,19 @@ class _SignupFormState extends State<SignupForm> {
                 validator: _validateConfirmPassword,
               ),
               const SizedBox(height: 32),
+              Row(
+                children: [
+                  Checkbox(
+                    value: _rememberMe,
+                    onChanged: (value) {
+                      setState(() {
+                        _rememberMe = value ?? false;
+                      });
+                    },
+                  ),
+                  const Text('Remember for 30 days'),
+                ],
+              ),
               SizedBox(
                 width: double.infinity,
                 height: 48,

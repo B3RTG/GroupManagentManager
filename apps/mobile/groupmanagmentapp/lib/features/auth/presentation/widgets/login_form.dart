@@ -6,6 +6,7 @@ import 'dart:async';
 import '../bloc/auth_bloc.dart';
 import 'package:groupmanagmentapp/core/services/google_sign_in_service.dart';
 import 'package:groupmanagmentapp/core/di/injection.dart';
+import 'package:groupmanagmentapp/core/services/secure_storage_service.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -93,16 +94,21 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    final SecureStorageService secureStorageService = getIt<SecureStorageService>();
+
     return BlocConsumer<AuthBloc, AuthState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is AuthError) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.message)));
         }
         if (state is AuthAuthenticated) {
+          if (_rememberMe) {
+            await secureStorageService.saveToken(state.token);
+          }
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Bienvenido, \\${state.userName}!')),
+            SnackBar(content: Text('Bienvenido, ${state.userName}!')),
           );
           Future.microtask(() {
             Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);

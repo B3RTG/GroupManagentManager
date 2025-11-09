@@ -10,6 +10,7 @@ class User {
   final DateTime lastLogin;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String token;
 
   User({
     required this.id,
@@ -23,5 +24,6 @@ class User {
     required this.lastLogin,
     required this.createdAt,
     required this.updatedAt,
+    required this.token,
   });
 }

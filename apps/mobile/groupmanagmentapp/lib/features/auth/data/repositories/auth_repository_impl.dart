@@ -29,6 +29,7 @@ class AuthRepositoryImpl implements AuthRepository {
       lastLogin: userModel.lastLogin,
       createdAt: userModel.createdAt,
       updatedAt: userModel.updatedAt,
+      token: authResponse.token,
     );
   }
 
@@ -56,6 +57,7 @@ class AuthRepositoryImpl implements AuthRepository {
       lastLogin: userModel.lastLogin,
       createdAt: userModel.createdAt,
       updatedAt: userModel.updatedAt,
+      token: authResponse.token,
     );
   }
 
@@ -78,6 +80,7 @@ class AuthRepositoryImpl implements AuthRepository {
       lastLogin: userModel.lastLogin,
       createdAt: userModel.createdAt,
       updatedAt: userModel.updatedAt,
+      token: authResponse.token,
     );
 
   }
@@ -103,6 +106,27 @@ class AuthRepositoryImpl implements AuthRepository {
       lastLogin: userModel.lastLogin,
       createdAt: userModel.createdAt,
       updatedAt: userModel.updatedAt,
+      token: authResponse.token,
     );
+  }
+
+  @override
+  Future<User> loginWithToken(String token) async {
+    final authResponse = await remoteDataSource.loginWithToken(token);
+    final userModel = authResponse.user;
+    return User(
+      id: userModel.id,
+      name: userModel.name,
+      username: userModel.username,
+      email: userModel.email,
+      preferredSports: userModel.preferredSports,
+      avatarUrl: userModel.avatarUrl,
+      phoneNumber: userModel.phoneNumber,
+      isActive: userModel.isActive,
+      lastLogin: userModel.lastLogin,
+      createdAt: userModel.createdAt,
+      updatedAt: userModel.updatedAt,
+      token: token
+    );  
   }
 }

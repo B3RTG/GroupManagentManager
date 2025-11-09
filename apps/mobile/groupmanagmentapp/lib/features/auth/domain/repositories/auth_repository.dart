@@ -6,5 +6,5 @@ abstract class AuthRepository {
   Future<User> loginWithGoogle({required String idToken});
   Future<User> registerWithGoogle({required String idToken});
   Future<User> register({required String email, required String name, required String password});
-  // Puedes agregar más métodos como refreshToken, etc.
+  Future<User> loginWithToken(String token); // <-- Añadido
 }
