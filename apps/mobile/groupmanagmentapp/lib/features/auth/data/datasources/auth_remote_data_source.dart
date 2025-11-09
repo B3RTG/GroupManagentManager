@@ -33,7 +33,7 @@ class AuthRemoteDataSource {
   Future<AuthResponseModel> loginWithGoogle({required String idToken}) async {
     try {
       final response = await apiClient.post(
-        '/auth/google/mobile',
+        '/auth/google/login',
         data: {'idToken': idToken},
       );
       return AuthResponseModel.fromJson(response.data);

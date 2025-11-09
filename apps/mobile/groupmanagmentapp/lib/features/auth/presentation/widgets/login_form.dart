@@ -196,6 +196,16 @@ class _LoginFormState extends State<LoginForm> {
                       ),
               ),
               const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  'or',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               // Botón Google
               SizedBox(
                 width: double.infinity,

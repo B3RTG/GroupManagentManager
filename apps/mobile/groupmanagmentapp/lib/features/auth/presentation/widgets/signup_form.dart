@@ -225,6 +225,16 @@ class _SignupFormState extends State<SignupForm> {
                       ),
               ),
               const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  'or',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 height: 48,

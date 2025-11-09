@@ -18,7 +18,7 @@ Future<void> configureDependencies() async {
   // Detectar plataforma y asignar la URL base adecuada
   String baseUrl = 'http://localhost:3000';
   if (!kIsWeb && Platform.isAndroid) {
-    baseUrl = 'http://192.168.1.50:3000'; // IP de la máquina host
+    baseUrl = 'http://192.168.1.51:3000'; // IP de la máquina host
     //baseUrl = 'http://10.0.2.2:3000'; Para emulador Android
   }
   // Core
